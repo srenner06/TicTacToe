@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.2.32505.173
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TikTakToe", "TikTakToe\TikTakToe.csproj", "{B0AD7C0F-246F-402C-BF24-08EF42C4A284}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CustomMessageBox", "..\..\..\Downloads\CustomMessageBox-main\CustomMessageBox-main\CustomMessageBox\CustomMessageBox.csproj", "{99054420-DE83-4AF4-9F65-7CE1D51A5561}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{B0AD7C0F-246F-402C-BF24-08EF42C4A284}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B0AD7C0F-246F-402C-BF24-08EF42C4A284}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B0AD7C0F-246F-402C-BF24-08EF42C4A284}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B0AD7C0F-246F-402C-BF24-08EF42C4A284}.Release|Any CPU.Build.0 = Release|Any CPU
+		{99054420-DE83-4AF4-9F65-7CE1D51A5561}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{99054420-DE83-4AF4-9F65-7CE1D51A5561}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{99054420-DE83-4AF4-9F65-7CE1D51A5561}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{99054420-DE83-4AF4-9F65-7CE1D51A5561}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {65A9C2E7-2A6E-467B-B438-9955EA787F8E}
+	EndGlobalSection
+EndGlobal
