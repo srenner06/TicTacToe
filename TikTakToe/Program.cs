@@ -50,21 +50,6 @@ namespace TikTakToe
 			this.Bord = new Bord(this);
 			while (true)
 			{
-				CustomMessageBox.Private.FormMessageBox starter = new CustomMessageBox.Private.FormMessageBox("Wollen Sie starten?", "", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
-				DialogResult starterResult = starter.ShowDialog();
-				if (starterResult == DialogResult.Yes)
-				{
-					_turn = Players.Player;
-				}
-				else if (starterResult == DialogResult.No)
-				{
-					_turn = Players.Computer;
-				}
-				else
-				{
-					return;
-				}
-
 				CustomMessageBox.Private.FormMessageBox frm = new CustomMessageBox.Private.FormMessageBox("Welchen Modus wollen sie spielen?", "", MessageBoxButtons.AbortRetryIgnore, MessageBoxIcon.Question, MessageBoxDefaultButton.Button4);
 				frm.SetButtonsText("Einfach", "Mittel", "Unmöglich");
 
@@ -72,17 +57,30 @@ namespace TikTakToe
 				if (result == DialogResult.Abort)
 				{
 					_modus = Mode.einfach;
-					break;
 				}
 				else if (result == DialogResult.Retry)
 				{
 					_modus = Mode.mittel;
-					break;
 				}
 				else if (result == DialogResult.Ignore)
 				{
 					_modus = Mode.unmöglich;
-					MessageBox.Show("Dieser Modus ist noch in Testphase");
+				}
+				else
+				{
+					return;
+				}
+
+				CustomMessageBox.Private.FormMessageBox starter = new CustomMessageBox.Private.FormMessageBox("Wollen Sie starten?", "", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
+				DialogResult starterResult = starter.ShowDialog();
+				if (starterResult == DialogResult.Yes)
+				{
+					_turn = Players.Player;
+					break;
+				}
+				else if (starterResult == DialogResult.No)
+				{
+					_turn = Players.Computer;
 					break;
 				}
 				else
@@ -172,40 +170,34 @@ namespace TikTakToe
 			}
 			else if (_modus == Mode.unmöglich)
 			{
-				if (_bord.GetFreeFields().Count == 9)
+				var task1 = Task.Factory.StartNew(() => _bord.Vorhang());
+				_bord.startVorhang = true;
+				Feld fieldToVictory = CheckIfPossibleWinn(Players.Computer);
+				if (!(fieldToVictory is null))
 				{
-					_bord.feld1.Click(true);
+					fieldToVictory.Click(true);
 				}
 				else
 				{
-					var task1 = Task.Factory.StartNew(() => _bord.Vorhang());
-					_bord.startVorhang = true;
-					Feld fieldToVictory = CheckIfPossibleWinn(Players.Computer);
-					if (!(fieldToVictory is null))
+					//Check if Player can win
+					Feld fieldToDefeat = CheckIfPossibleWinn(Players.Player);
+					if (!(fieldToDefeat is null))
 					{
-						fieldToVictory.Click(true);
+						fieldToDefeat.Click(true);
 					}
 					else
 					{
-						//Check if Player can win
-						Feld fieldToDefeat = CheckIfPossibleWinn(Players.Player);
-						if (!(fieldToDefeat is null))
-						{
-							fieldToDefeat.Click(true);
-						}
-						else
-						{
-							int id = FindBestTurn(this.Bord, Players.Computer, 0);
-							_bord.GetFieldById(id).Click(true);
-						}
+						int id = FindBestTurn(new ShallowBord(this.Bord), Players.Computer, 0);
+						_bord.GetFieldById(id).Click(true);
 					}
-					_bord.stopVorhang = true;
-					_bord.CloseVorhang();
 				}
 			}
+			_bord.stopVorhang = true;
+			_bord.CloseVorhang();
 
 			CheckVictory();
 			_turn = Players.Player;
+			_bord.form.Activate();
 		}
 
 		public Feld CheckIfPossibleWinn(Players checkedPlayer)
@@ -254,30 +246,7 @@ namespace TikTakToe
 
 		public void CheckVictory()
 		{
-			if (_bord.GetFreeFields().Count == 0)
-			{
-				_ended = true;
-				_turn = Players.NoOne;
-
-				CustomMessageBox.Private.FormMessageBox frm = new CustomMessageBox.Private.FormMessageBox("Unentschieden\nMöchten Sie noch einmal starten?", "", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
-				if (frm.ShowDialog() == DialogResult.Yes)
-				{
-					this._bord.form.Dispose();
-					this._bord.form.Close();
-					Start();
-				}
-				if (System.Windows.Forms.Application.MessageLoop)
-				{
-					// WinForms app
-					System.Windows.Forms.Application.Exit();
-				}
-				else
-				{
-					// Console app
-					System.Environment.Exit(1);
-				}
-			}
-			else if (CheckWin(_bord.feld1, _bord.feld2, _bord.feld3, Players.Player) || CheckWin(_bord.feld4, _bord.feld5, _bord.feld6, Players.Player) || CheckWin(_bord.feld7, _bord.feld8, _bord.feld9, Players.Player) || CheckWin(_bord.feld1, _bord.feld4, _bord.feld7, Players.Player) || CheckWin(_bord.feld2, _bord.feld5, _bord.feld8, Players.Player) || CheckWin(_bord.feld3, _bord.feld6, _bord.feld9, Players.Player) || CheckWin(_bord.feld1, _bord.feld5, _bord.feld9, Players.Player) || CheckWin(_bord.feld3, _bord.feld5, _bord.feld7, Players.Player))
+			if (CheckWin(_bord.feld1, _bord.feld2, _bord.feld3, Players.Player) || CheckWin(_bord.feld4, _bord.feld5, _bord.feld6, Players.Player) || CheckWin(_bord.feld7, _bord.feld8, _bord.feld9, Players.Player) || CheckWin(_bord.feld1, _bord.feld4, _bord.feld7, Players.Player) || CheckWin(_bord.feld2, _bord.feld5, _bord.feld8, Players.Player) || CheckWin(_bord.feld3, _bord.feld6, _bord.feld9, Players.Player) || CheckWin(_bord.feld1, _bord.feld5, _bord.feld9, Players.Player) || CheckWin(_bord.feld3, _bord.feld5, _bord.feld7, Players.Player))
 			{
 				_ended = true;
 				_turn = Players.NoOne;
@@ -321,6 +290,29 @@ namespace TikTakToe
 					System.Environment.Exit(1);
 				}
 			}
+			else if (_bord.GetFreeFields().Count == 0)
+			{
+				_ended = true;
+				_turn = Players.NoOne;
+
+				CustomMessageBox.Private.FormMessageBox frm = new CustomMessageBox.Private.FormMessageBox("Unentschieden\nMöchten Sie noch einmal starten?", "", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
+				if (frm.ShowDialog() == DialogResult.Yes)
+				{
+					this._bord.form.Dispose();
+					this._bord.form.Close();
+					Start();
+				}
+				if (System.Windows.Forms.Application.MessageLoop)
+				{
+					// WinForms app
+					System.Windows.Forms.Application.Exit();
+				}
+				else
+				{
+					// Console app
+					System.Environment.Exit(1);
+				}
+			}
 		}
 
 		public bool CheckWin(Feld feld1, Feld feld2, Feld feld3, Players player)
@@ -332,89 +324,12 @@ namespace TikTakToe
 			return false;
 		}
 
-		//public Tuple<int, int> MiniMax(Bord bord, bool Computer, int depth = 0)
-		//{
-		//	int biggestScore = 0;
-		//	int score = 0;
-		//	if (Computer)
-		//	{
-		//		Bord clone = bord.Clone();
-		//		foreach (Feld fld in clone.GetFreeFields())
-		//		{
-		//			fld.SetStatus(Players.Computer);
-		//			Players result = MiniMaxWin(bord);
-		//			if (result == Players.Computer)
-		//			{
-		//				return Tuple.Create(1, fld.id);
-		//			}
-		//			else if (result == Players.Player)
-		//			{
-		//				score = -1;
-		//			}
-		//			else if (result == Players.NoOne && clone.GetFreeFields().Count == 0) score = 0;
-		//			if (score != -2) return Tuple.Create(score, fld.id);
-		//			Tuple<int, int> newScore = MiniMax(clone, false, depth + 1);
-		//			score = newScore.Item2;
-		//			if (score > biggestScore) biggestScore = score;
-		//			if (biggestScore == 1)
-		//			{
-		//				return newScore;
-		//			}
-		//		}
-		//	}
-		//	else
-		//	{
-		//		Bord clone = bord.Clone();
-		//		foreach (Feld fld in clone.GetFreeFields())
-		//		{
-
-		//			fld.SetStatus(Players.Computer);
-		//			Players result = MiniMaxWin(bord);
-		//			if (result == Players.Computer)
-		//			{
-		//				score = 1;
-		//			}
-		//			else if (result == Players.Player)
-		//			{
-		//				score = -1;
-		//			}
-		//			else if (result == Players.NoOne && clone.GetFreeFields().Count == 0) score = 0;
-		//			if (score != -2) return Tuple.Create(score, fld.id);
-		//			MiniMax(clone, true);
-		//		}
-		//	}
-		//	return null;
-		//}
-
-		public Players MiniMaxWin(Bord bord)
+	
+		private int FindBestTurn(ShallowBord bord, Players player, int count)
 		{
-			if (checkWinMiniMax(bord.feld1, bord.feld2, bord.feld3, Players.Player) || checkWinMiniMax(bord.feld4, bord.feld5, bord.feld6, Players.Player) || checkWinMiniMax(bord.feld7, bord.feld8, bord.feld9, Players.Player) || checkWinMiniMax(bord.feld1, bord.feld4, bord.feld7, Players.Player) || checkWinMiniMax(bord.feld2, bord.feld5, bord.feld8, Players.Player) || checkWinMiniMax(bord.feld3, bord.feld6, bord.feld9, Players.Player) || checkWinMiniMax(bord.feld1, bord.feld5, bord.feld9, Players.Player) || checkWinMiniMax(bord.feld3, bord.feld5, bord.feld7, Players.Player))
-			{
-				return Players.Player;
-			}
-			else if (checkWinMiniMax(bord.feld1, bord.feld2, bord.feld3, Players.Computer) || checkWinMiniMax(bord.feld4, bord.feld5, bord.feld6, Players.Computer) || checkWinMiniMax(bord.feld7, bord.feld8, bord.feld9, Players.Computer) || checkWinMiniMax(bord.feld1, bord.feld4, bord.feld7, Players.Computer) || checkWinMiniMax(bord.feld2, bord.feld5, bord.feld8, Players.Computer) || checkWinMiniMax(bord.feld3, bord.feld6, bord.feld9, Players.Computer) || checkWinMiniMax(bord.feld1, bord.feld5, bord.feld9, Players.Computer) || checkWinMiniMax(bord.feld3, bord.feld5, bord.feld7, Players.Computer))
-			{
-				return Players.Computer;
-			}
-			return Players.NoOne;
-		}
-		private bool checkWinMiniMax(Feld feld1, Feld feld2, Feld feld3, Players player)
-		{
-			return checkWinMiniMax(new Players[] { feld1.GetStatus(), feld2.GetStatus(), feld3.GetStatus() }, player);
-		}
+			ShallowBord clone = new ShallowBord();
+			bord.CopyTo(ref clone);
 
-		private bool checkWinMiniMax(Players[] field, Players player)
-		{
-			if (field.All(x => x == player))
-			{
-				return true;
-			}
-			return false;
-		}
-
-		private int FindBestTurn(Bord bord, Players player, int count)
-		{
-			Bord clone = bord.Clone();
 			bool max = player == Players.Computer;
 			Dictionary<string, int> best = new Dictionary<string, int>();
 			best.Add("id", -1);
@@ -422,11 +337,11 @@ namespace TikTakToe
 			if (max)
 				best["sc"] = -2;
 
-			foreach (Feld fld in clone.GetFreeFields())
+			foreach (int fld in clone.GetFreeFields())
 			{
-				fld.SetStatus(player, true);
+				clone.SetByNum(fld, player, true);
 				Dictionary<string, int> curr = new Dictionary<string, int>();
-				curr.Add("id", fld.id);
+				curr.Add("id", fld);
 				curr.Add("sc", score(clone, player, count));
 				if (max)
 				{
@@ -442,7 +357,7 @@ namespace TikTakToe
 						best = curr;
 					}
 				}
-				fld.SetStatus(Players.NoOne, true);
+				clone.SetByNum(fld, Players.NoOne, true);
 
 				//if (count == 0 && best["sc"] == 1)
 				//	return best["id"];
@@ -468,16 +383,19 @@ namespace TikTakToe
 			}
 		}
 
-		private int score(Bord bord, Players player, int count)
+		private int score(ShallowBord bord, Players player, int count)
 		{
-			Players winner = MiniMaxWin(bord);
+			Players winner = bord.CheckWin();
 			if (winner != Players.NoOne)
 			{
-				if (winner == player)
-					return -1;
-				else
+				if (winner == Players.Computer)
 					return 1;
+				else
+					return -1;
 			}
+			if (bord.GetFreeFields().Count == 0)
+				return 0;
+
 			if (player == Players.Computer)
 			{
 				return FindBestTurn(bord, Players.Player, count + 1);
@@ -709,6 +627,155 @@ namespace TikTakToe
 		//}
 	}
 
+	class ShallowBord
+	{
+		#region fields
+		public Players feld1 = Players.NoOne;
+		public Players feld2 = Players.NoOne;
+		public Players feld3 = Players.NoOne;
+		public Players feld4 = Players.NoOne;
+		public Players feld5 = Players.NoOne;
+		public Players feld6 = Players.NoOne;
+		public Players feld7 = Players.NoOne;
+		public Players feld8 = Players.NoOne;
+		public Players feld9 = Players.NoOne;
+		#endregion
+		public ShallowBord() { }
+
+		public ShallowBord(Bord import)
+		{
+			feld1 = import.feld1.GetStatus();
+			feld2 = import.feld2.GetStatus();
+			feld3 = import.feld3.GetStatus();
+			feld4 = import.feld4.GetStatus();
+			feld5 = import.feld5.GetStatus();
+			feld6 = import.feld6.GetStatus();
+			feld7 = import.feld7.GetStatus();
+			feld8 = import.feld8.GetStatus();
+			feld9 = import.feld9.GetStatus();
+		}
+
+		public void ImportBord(Bord import)
+		{
+			feld1 = import.feld1.GetStatus();
+			feld2 = import.feld2.GetStatus();
+			feld3 = import.feld3.GetStatus();
+			feld4 = import.feld4.GetStatus();
+			feld5 = import.feld5.GetStatus();
+			feld6 = import.feld6.GetStatus();
+			feld7 = import.feld7.GetStatus();
+			feld8 = import.feld8.GetStatus();
+			feld9 = import.feld9.GetStatus();
+		}
+
+		public void CopyTo(ref ShallowBord newBord)
+		{
+			newBord.feld1 = feld1;
+			newBord.feld2 = feld2;
+			newBord.feld3 = feld3;
+			newBord.feld4 = feld4;
+			newBord.feld5 = feld5;
+			newBord.feld6 = feld6;
+			newBord.feld7 = feld7;
+			newBord.feld8 = feld8;
+			newBord.feld9 = feld9;
+		}
+
+		public bool CheckPossibleWin(Players player)
+		{
+			if (CheckPossibleWin(feld1, feld2, feld3, player)) return true;
+			if (CheckPossibleWin(feld4, feld5, feld6, player)) return true;
+			if (CheckPossibleWin(feld7, feld8, feld9, player)) return true;
+
+			if (CheckPossibleWin(feld1, feld4, feld7, player)) return true;
+			if (CheckPossibleWin(feld2, feld5, feld8, player)) return true;
+			if (CheckPossibleWin(feld3, feld6, feld9, player)) return true;
+
+			if (CheckPossibleWin(feld1, feld5, feld9, player)) return true;
+			if (CheckPossibleWin(feld3, feld5, feld7, player)) return true;
+
+			return false;
+		}
+
+		public bool CheckPossibleWin(Players f1, Players f2, Players f3, Players player)
+		{
+			Players opposite = Players.Computer;
+			if (player == Players.Computer)
+				opposite = Players.Player;
+
+			if (f1 == opposite || f2 == opposite || f3 == opposite)
+				return false;
+
+			int count = 0;
+			if (f1 == player) count++;
+			if (f2 == player) count++;
+			if (f3 == player) count++;
+
+			if (count >= 2) return true;
+
+			return false;
+		}
+
+		public Players CheckWin()
+		{
+			if (feld1 == feld2 && feld1 == feld3) return feld1;
+			if (feld4 == feld5 && feld4 == feld6) return feld4;
+			if (feld7 == feld8 && feld7 == feld9) return feld7;
+
+			if (feld1 == feld4 && feld1 == feld7) return feld1;
+			if (feld2 == feld5 && feld2 == feld8) return feld2;
+			if (feld3 == feld6 && feld3 == feld9) return feld3;
+
+			if (feld1 == feld5 && feld1 == feld9) return feld1;
+			if (feld3 == feld5 && feld3 == feld7) return feld3;
+
+			return Players.NoOne;
+		}
+
+		public List<int> GetFreeFields()
+		{
+			List<int> list = new List<int>();
+			if (feld1 == Players.NoOne) list.Add(1);
+			if (feld2 == Players.NoOne) list.Add(2);
+			if (feld3 == Players.NoOne) list.Add(3);
+			if (feld4 == Players.NoOne) list.Add(4);
+			if (feld5 == Players.NoOne) list.Add(5);
+			if (feld6 == Players.NoOne) list.Add(6);
+			if (feld7 == Players.NoOne) list.Add(7);
+			if (feld8 == Players.NoOne) list.Add(8);
+			if (feld9 == Players.NoOne) list.Add(9);
+
+			return list;
+		}
+		public void SetByNum(int i, Players player, bool force = false)
+		{
+			if (force)
+			{
+				if (i == 1) feld1 = player;
+				if (i == 2) feld2 = player;
+				if (i == 3) feld3 = player;
+				if (i == 4) feld4 = player;
+				if (i == 5) feld5 = player;
+				if (i == 6) feld6 = player;
+				if (i == 7) feld7 = player;
+				if (i == 8) feld8 = player;
+				if (i == 9) feld9 = player;
+				return;
+			}
+
+			if (i == 1 || feld1 == Players.NoOne) feld1 = player;
+			if (i == 2 || feld2 == Players.NoOne) feld2 = player;
+			if (i == 3 || feld3 == Players.NoOne) feld3 = player;
+			if (i == 4 || feld4 == Players.NoOne) feld4 = player;
+			if (i == 5 || feld5 == Players.NoOne) feld5 = player;
+			if (i == 6 || feld6 == Players.NoOne) feld6 = player;
+			if (i == 7 || feld7 == Players.NoOne) feld7 = player;
+			if (i == 8 || feld8 == Players.NoOne) feld8 = player;
+			if (i == 9 || feld9 == Players.NoOne) feld9 = player;
+		}
+
+	}
+
 	class Feld
 	{
 		private Players fieldOwner = Players.NoOne;
@@ -833,186 +900,6 @@ namespace TikTakToe
 			return false;
 		}
 	}
-
-	public class TransparentLabel : Control
-	{
-		/// <summary>
-		/// Creates a new <see cref="TransparentLabel"/> instance.
-		/// </summary>
-		public TransparentLabel()
-		{
-			TabStop = false;
-		}
-
-		/// <summary>
-		/// Gets the creation parameters.
-		/// </summary>
-		protected override CreateParams CreateParams
-		{
-			get
-			{
-				CreateParams cp = base.CreateParams;
-				cp.ExStyle |= 0x20;
-				return cp;
-			}
-		}
-
-		/// <summary>
-		/// Paints the background.
-		/// </summary>
-		/// <param name="e">E.</param>
-		protected override void OnPaintBackground(PaintEventArgs e)
-		{
-			// do nothing
-		}
-
-		/// <summary>
-		/// Paints the control.
-		/// </summary>
-		/// <param name="e">E.</param>
-		protected override void OnPaint(PaintEventArgs e)
-		{
-			DrawText();
-		}
-
-		protected override void WndProc(ref Message m)
-		{
-			base.WndProc(ref m);
-			if (m.Msg == 0x000F)
-			{
-				DrawText();
-			}
-		}
-
-		private void DrawText()
-		{
-			using (Graphics graphics = CreateGraphics())
-			using (SolidBrush brush = new SolidBrush(ForeColor))
-			{
-				SizeF size = graphics.MeasureString(Text, Font);
-
-				// first figure out the top
-				float top = 0;
-				switch (textAlign)
-				{
-					case ContentAlignment.MiddleLeft:
-					case ContentAlignment.MiddleCenter:
-					case ContentAlignment.MiddleRight:
-						top = (Height - size.Height) / 2;
-						break;
-					case ContentAlignment.BottomLeft:
-					case ContentAlignment.BottomCenter:
-					case ContentAlignment.BottomRight:
-						top = Height - size.Height;
-						break;
-				}
-
-				float left = -1;
-				switch (textAlign)
-				{
-					case ContentAlignment.TopLeft:
-					case ContentAlignment.MiddleLeft:
-					case ContentAlignment.BottomLeft:
-						if (RightToLeft == RightToLeft.Yes)
-							left = Width - size.Width;
-						else
-							left = -1;
-						break;
-					case ContentAlignment.TopCenter:
-					case ContentAlignment.MiddleCenter:
-					case ContentAlignment.BottomCenter:
-						left = (Width - size.Width) / 2;
-						break;
-					case ContentAlignment.TopRight:
-					case ContentAlignment.MiddleRight:
-					case ContentAlignment.BottomRight:
-						if (RightToLeft == RightToLeft.Yes)
-							left = -1;
-						else
-							left = Width - size.Width;
-						break;
-				}
-				graphics.DrawString(Text, Font, brush, left, top);
-			}
-		}
-
-		/// <summary>
-		/// Gets or sets the text associated with this control.
-		/// </summary>
-		/// <returns>
-		/// The text associated with this control.
-		/// </returns>
-		public override string Text
-		{
-			get
-			{
-				return base.Text;
-			}
-			set
-			{
-				base.Text = value;
-				RecreateHandle();
-			}
-		}
-
-		/// <summary>
-		/// Gets or sets a value indicating whether control's elements are aligned to support locales using right-to-left fonts.
-		/// </summary>
-		/// <value></value>
-		/// <returns>
-		/// One of the <see cref="T:System.Windows.Forms.RightToLeft"/> values. The default is <see cref="F:System.Windows.Forms.RightToLeft.Inherit"/>.
-		/// </returns>
-		/// <exception cref="T:System.ComponentModel.InvalidEnumArgumentException">
-		/// The assigned value is not one of the <see cref="T:System.Windows.Forms.RightToLeft"/> values.
-		/// </exception>
-		public override RightToLeft RightToLeft
-		{
-			get
-			{
-				return base.RightToLeft;
-			}
-			set
-			{
-				base.RightToLeft = value;
-				RecreateHandle();
-			}
-		}
-
-		/// <summary>
-		/// Gets or sets the font of the text displayed by the control.
-		/// </summary>
-		/// <value></value>
-		/// <returns>
-		/// The <see cref="T:System.Drawing.Font"/> to apply to the text displayed by the control. The default is the value of the <see cref="P:System.Windows.Forms.Control.DefaultFont"/> property.
-		/// </returns>
-		public override Font Font
-		{
-			get
-			{
-				return base.Font;
-			}
-			set
-			{
-				base.Font = value;
-				RecreateHandle();
-			}
-		}
-
-		private ContentAlignment textAlign = ContentAlignment.TopLeft;
-		/// <summary>
-		/// Gets or sets the text alignment.
-		/// </summary>
-		public ContentAlignment TextAlign
-		{
-			get { return textAlign; }
-			set
-			{
-				textAlign = value;
-				RecreateHandle();
-			}
-		}
-	}
-
 
 	public class Helper
 	{
