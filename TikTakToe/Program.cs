@@ -1,5 +1,6 @@
 using System.Runtime.Serialization.Formatters.Binary;
 
+
 namespace TikTakToe
 {
 	internal static class Program
@@ -50,7 +51,7 @@ namespace TikTakToe
 			this.Bord = new Bord(this);
 			while (true)
 			{
-				CustomMessageBox.Private.FormMessageBox frm = new CustomMessageBox.Private.FormMessageBox("Welchen Modus wollen sie spielen?", "", MessageBoxButtons.AbortRetryIgnore, MessageBoxIcon.Question, MessageBoxDefaultButton.Button4);
+				MsgForm frm = new MsgForm("Welchen Modus wollen sie spielen?", "", MessageBoxButtons.AbortRetryIgnore, MessageBoxIcon.Question, MessageBoxDefaultButton.Button4);
 				frm.SetButtonsText("Einfach", "Mittel", "Unmöglich");
 
 				DialogResult result = frm.ShowDialog();
@@ -71,7 +72,7 @@ namespace TikTakToe
 					return;
 				}
 
-				CustomMessageBox.Private.FormMessageBox starter = new CustomMessageBox.Private.FormMessageBox("Wollen Sie starten?", "", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
+				MsgForm starter = new MsgForm("Wollen Sie starten?", "", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
 				DialogResult starterResult = starter.ShowDialog();
 				if (starterResult == DialogResult.Yes)
 				{
@@ -250,7 +251,7 @@ namespace TikTakToe
 			{
 				_ended = true;
 				_turn = Players.NoOne;
-				CustomMessageBox.Private.FormMessageBox frm = new CustomMessageBox.Private.FormMessageBox("Sie haben gewonnen\nMöchten Sie noch einmal starten?", "", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
+				MsgForm frm = new MsgForm("Sie haben gewonnen\nMöchten Sie noch einmal starten?", "", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
 				if (frm.ShowDialog() == DialogResult.Yes)
 				{
 					this._bord.form.Dispose();
@@ -272,7 +273,7 @@ namespace TikTakToe
 			{
 				_ended = true;
 				_turn = Players.NoOne;
-				CustomMessageBox.Private.FormMessageBox frm = new CustomMessageBox.Private.FormMessageBox("Sie haben verloren\nMöchten Sie noch einmal starten?", "", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
+				MsgForm frm = new MsgForm("Sie haben verloren\nMöchten Sie noch einmal starten?", "", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
 				if (frm.ShowDialog() == DialogResult.Yes)
 				{
 					this._bord.form.Dispose();
@@ -295,7 +296,7 @@ namespace TikTakToe
 				_ended = true;
 				_turn = Players.NoOne;
 
-				CustomMessageBox.Private.FormMessageBox frm = new CustomMessageBox.Private.FormMessageBox("Unentschieden\nMöchten Sie noch einmal starten?", "", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
+				MsgForm frm = new MsgForm("Unentschieden\nMöchten Sie noch einmal starten?", "", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
 				if (frm.ShowDialog() == DialogResult.Yes)
 				{
 					this._bord.form.Dispose();
@@ -359,19 +360,19 @@ namespace TikTakToe
 				}
 				clone.SetByNum(fld, Players.NoOne, true);
 
-				//if (count == 0 && best["sc"] == 1)
-				//	return best["id"];
+				if (count == 0 && best["sc"] == 1)
+					return best["id"];
 
-				//if (max)
-				//{
-				//	if (best["sc"] == 1)
-				//		return 1;
-				//}
-				//else
-				//{
-				//	if (best["sc"] == -1)
-				//		return -1;
-				//}
+				if (max)
+				{
+					if (best["sc"] == 1)
+						return 1;
+				}
+				else
+				{
+					if (best["sc"] == -1)
+						return -1;
+				}
 			}
 			if (count == 0)
 			{
@@ -574,7 +575,7 @@ namespace TikTakToe
 
 		public async Task Vorhang()
 		{
-			this.vorhang = new CustomMessageBox.Private.FormMessageBox("Der Computer berechnet seinen Zug...");
+			this.vorhang = new MsgForm("Der Computer berechnet seinen Zug...");
 			while (true)
 			{
 				if (stopVorhang)
