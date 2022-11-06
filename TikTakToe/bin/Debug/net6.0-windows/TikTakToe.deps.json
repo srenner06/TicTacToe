@@ -8,15 +8,15 @@
     ".NETCoreApp,Version=v6.0": {
       "TikTakToe/1.0.0": {
         "dependencies": {
-          "MsgBox": "1.0.0"
+          "CustomMessageBox": "1.0.0"
         },
         "runtime": {
           "TikTakToe.dll": {}
         }
       },
-      "MsgBox/1.0.0": {
+      "CustomMessageBox/1.0.0": {
         "runtime": {
-          "MsgBox.dll": {}
+          "CustomMessageBox.exe": {}
         }
       }
     }
@@ -27,7 +27,7 @@
       "serviceable": false,
       "sha512": ""
     },
-    "MsgBox/1.0.0": {
+    "CustomMessageBox/1.0.0": {
       "type": "project",
       "serviceable": false,
       "sha512": ""

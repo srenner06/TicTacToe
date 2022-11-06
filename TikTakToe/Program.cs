@@ -1,5 +1,9 @@
-using System.Runtime.Serialization.Formatters.Binary;
-
+using System.Reflection;
+using System.Runtime.InteropServices;
+using System.IO;
+using System.Text;
+using CustomMessageBox.Private;
+using System.Linq;
 
 namespace TikTakToe
 {
@@ -19,18 +23,27 @@ namespace TikTakToe
 			ttt.Start();
 		}
 	}
-	enum Mode { einfach, mittel, unmöglich }
+	enum Schwierigkeit { einfach, mittel, unmöglich }
 
 	class TikTakToe
 	{
 		private bool _ended = false;
 		public bool Ended { get { return _ended; } }
-		private Mode _modus;
-		public Mode Modus { get { return _modus; } }
-		private Bord _bord;
-		private Players _turn;
 
-		 public Players Turn { get { return _turn; } set { _turn = value; } }
+		private Schwierigkeit _schwierigkeit;
+		public Schwierigkeit Schwierigkeit { get { return _schwierigkeit; } }
+
+		private Modus _modus;
+		public Modus Modus { get { return _modus; } }
+
+
+		private Bord _bord;
+
+		private Players _PvCTurn;
+		public Players PvCTurn { get { return _PvCTurn; } set { _PvCTurn = value; } }
+
+		private PvPPlayers _PvPTurn;
+		public PvPPlayers PvPTurn { get { return _PvPTurn; } set { _PvPTurn = value; } }
 
 		public Bord Bord
 		{
@@ -44,60 +57,277 @@ namespace TikTakToe
 			}
 		}
 
-		private static Random rnd = new Random();
+		private static Random rnd;
+		private static IniFile ini;
+		public const char colorSplitter = ',';
 
-		public void Start()
+		public Color computerColor { get; private set; } = Color.Blue;
+		public Color playerColor { get; private set; } = Color.Red;
+
+		public Color player1Color { get; private set; } = Color.Blue;
+		public Color player2Color { get; private set; } = Color.Red;
+
+
+		public TikTakToe()
 		{
-			this.Bord = new Bord(this);
+			ini = new IniFile("settings.ini");
+			rnd = new Random();
+			Bord = new Bord(this);
+
+			//PvC
+			if (ini.KeyExists("computerColor", "PvC"))
+			{
+				try
+				{
+					int[] c = ini.Read("computerColor", "PvC").Split(colorSplitter).Select(i => int.Parse(i)).ToArray();
+					computerColor = Color.FromArgb(c[0], c[1], c[2], c[3]);
+				}
+				catch { }
+			}
+			if (ini.KeyExists("playerColor", "PvC"))
+			{
+				try
+				{
+					int[] c = ini.Read("playerColor", "PvC").Split(colorSplitter).Select(i => int.Parse(i)).ToArray();
+					playerColor = Color.FromArgb(c[0], c[1], c[2], c[3]);
+				} catch{ }
+			}
+
+			//PvP
+			if (ini.KeyExists("player1Color", "PvP"))
+			{
+				try
+				{
+					int[] c = ini.Read("player1Color", "PvP").Split(colorSplitter).Select(i => int.Parse(i)).ToArray();
+					player1Color = Color.FromArgb(c[0], c[1], c[2], c[3]);
+				}
+				catch { }
+			}
+			if (ini.KeyExists("player2Color", "PvP"))
+			{
+				try
+				{
+					int[] c = ini.Read("player2Color", "PvP").Split(colorSplitter).Select(i => int.Parse(i)).ToArray();
+					player2Color = Color.FromArgb(c[0], c[1], c[2], c[3]);
+				}
+				catch { }
+			}
+		}
+
+		public async void Start()
+		{
+			Task t = Helper.Activate(this.Bord.form);
+			await t;
+
+			this.Bord.ResetFields();
 			while (true)
 			{
-				MsgForm frm = new MsgForm("Welchen Modus wollen sie spielen?", "", MessageBoxButtons.AbortRetryIgnore, MessageBoxIcon.Question, MessageBoxDefaultButton.Button4);
-				frm.SetButtonsText("Einfach", "Mittel", "Unmöglich");
+				MsgForm frm = new MsgForm("Gegen wen wollen Sie spielen?", "", MessageBoxButtons.OKCancel);
+				frm.SetButtonsText("Spieler", "Computer", "");
+				DialogResult answer = frm.ShowDialog();
+				if (answer == DialogResult.OK)
+				{
+					if (player1Color == player2Color)
+						SetColorsPvP();
+					frm = new MsgForm("", "", MessageBoxButtons.YesNo);
+					frm.SetButtonsText("Starten", "Farben ändern");
+					DialogResult a = frm.ShowDialog(this.Bord.form);
+					if (a == DialogResult.Yes)
+					{
+						PvCTurn = Players.NoOne;
+						PvPTurn = PvPPlayers.Player1;
+						break;
+					}
+					else if (a == DialogResult.No)
+					{
+						SetColorsPvP();
+					}
+					else
+					{
+						return;
+					}
+				}
+				else if (answer == DialogResult.No)
+				{
 
-				DialogResult result = frm.ShowDialog();
-				if (result == DialogResult.Abort)
-				{
-					_modus = Mode.einfach;
-				}
-				else if (result == DialogResult.Retry)
-				{
-					_modus = Mode.mittel;
-				}
-				else if (result == DialogResult.Ignore)
-				{
-					_modus = Mode.unmöglich;
-				}
-				else
-				{
-					return;
-				}
+					if (computerColor == playerColor)
+						SetColorsPvC();
 
-				MsgForm starter = new MsgForm("Wollen Sie starten?", "", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
-				DialogResult starterResult = starter.ShowDialog();
-				if (starterResult == DialogResult.Yes)
-				{
-					_turn = Players.Player;
-					break;
-				}
-				else if (starterResult == DialogResult.No)
-				{
-					_turn = Players.Computer;
-					break;
+					frm = new MsgForm("Welchen Schwierigkeit wollen sie spielen?", "", MessageBoxButtons.AbortRetryIgnore, MessageBoxIcon.Question, MessageBoxDefaultButton.Button4);
+					frm.SetButtonsText("Einfach", "Mittel", "Unmöglich");
+
+					DialogResult result = frm.ShowDialog(this.Bord.form);
+					if (result == DialogResult.Abort)
+					{
+						_schwierigkeit = Schwierigkeit.einfach;
+					}
+					else if (result == DialogResult.Retry)
+					{
+						_schwierigkeit = Schwierigkeit.mittel;
+					}
+					else if (result == DialogResult.Ignore)
+					{
+						_schwierigkeit = Schwierigkeit.unmöglich;
+					}
+					else
+					{
+						return;
+					}
+
+					startfrage:
+					MsgForm starter = new MsgForm("Wer soll starten?", "", MessageBoxButtons.AbortRetryIgnore, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
+					starter.SetButtonsText("Sie", "Computer", "Farben ändern");
+					DialogResult starterResult = starter.ShowDialog(this.Bord.form);
+					if (starterResult == DialogResult.Abort)
+					{
+						_PvCTurn = Players.Player;
+						break;
+					}
+					else if (starterResult == DialogResult.Retry)
+					{
+						_PvCTurn = Players.Computer_Player2;
+						break;
+					}
+					else if (starterResult == DialogResult.Ignore)
+					{
+						SetColorsPvC();
+					}
+					else
+					{
+						return;
+					}
 				}
 				else
 				{
 					return;
 				}
 			}
-			Bord.Show(_turn);
+			Bord.Show(_PvCTurn);
+		}
+
+		private void SetColorsPvC()
+		{
+			MsgForm f;
+			ColorDialog dialog = new ColorDialog();
+			do
+			{
+				f = new MsgForm("Bitte die Farbe für den Coputer auswählen");
+				//f.Activate();
+				f.ShowDialog();
+				dialog.ShowDialog();
+				computerColor = dialog.Color;
+
+				if (computerColor != Color.White)
+				{
+					ini.Write("computerColor", computerColor.A.ToString() + colorSplitter + computerColor.R.ToString() + colorSplitter + computerColor.G.ToString() + colorSplitter + computerColor.B.ToString(), "PvC");
+					f = new MsgForm($"Die Farbe für den Computer wurde auf \"{dialog.Color.Name}\" gesetzt");
+					//f.Activate();
+					f.ShowDialog();
+					break;
+				}
+				else
+				{
+					f = new MsgForm("Die Farbe darf nicht Weiss sein", "", MessageBoxIcon.Warning);
+					//f.Activate();
+					f.ShowDialog();
+				}
+
+			} while (true);
+
+			do
+			{
+				f = new MsgForm("Bitte die Farbe für den Spieler wählen");
+				//f.Activate();
+				f.ShowDialog();
+				dialog.ShowDialog();
+				playerColor = dialog.Color;
+				if (playerColor == computerColor)
+				{
+					f = new MsgForm("Der Computer und der Spieler dürfen nicht die gleiche Farbe haben", "", MessageBoxIcon.Warning);
+					//f.Activate();
+					f.ShowDialog();
+				}
+				else if (playerColor == Color.White)
+				{
+					f = new MsgForm("Die Farbe darf nicht Weiss sein", "", MessageBoxIcon.Warning);
+					//f.Activate();
+					f.ShowDialog();
+				}
+				else
+				{
+					ini.Write("computerColor", playerColor.A.ToString() + colorSplitter + playerColor.R.ToString() + colorSplitter + playerColor.G.ToString() + colorSplitter + playerColor.B.ToString(), "PvC");
+					f = new MsgForm($"Die Farbe für den Spieler wurde auf  \"{dialog.Color.Name}\" gesetzt");
+					//f.Activate();
+					f.ShowDialog();
+					break;
+				}
+			} while (true);
+		}
+		private void SetColorsPvP()
+		{
+			MsgForm f;
+			ColorDialog dialog = new ColorDialog();
+			do
+			{
+				f = new MsgForm("Bitte die Farbe für Spieler 1 auswählen");
+				//f.Activate();
+				f.ShowDialog();
+				dialog.ShowDialog();
+				computerColor = dialog.Color;
+
+				if (computerColor != Color.White)
+				{
+					ini.Write("player1Color", computerColor.A.ToString() + colorSplitter + computerColor.R.ToString() + colorSplitter + computerColor.G.ToString() + colorSplitter + computerColor.B.ToString(), "PvP");
+					f = new MsgForm($"Die Farbe für Spieler 1 wurde auf \"{dialog.Color.Name}\" gesetzt");
+					//f.Activate();
+					f.ShowDialog();
+					break;
+				}
+				else
+				{
+					f = new MsgForm("Die Farbe darf nicht Weiss sein", "", MessageBoxIcon.Warning);
+					//f.Activate();
+					f.ShowDialog();
+				}
+
+			} while (true);
+
+			do
+			{
+				f = new MsgForm("Bitte die Farbe für den Spieler 2 wählen");
+				//f.Activate();
+				f.ShowDialog();
+				dialog.ShowDialog();
+				playerColor = dialog.Color;
+				if (playerColor == computerColor)
+				{
+					f = new MsgForm("Spieler 1 und Spieler 2 dürfen nicht die gleiche Farbe haben", "", MessageBoxIcon.Warning);
+					//f.Activate();
+					f.ShowDialog();
+				}
+				else if (playerColor == Color.White)
+				{
+					f = new MsgForm("Die Farbe darf nicht Weiss sein", "", MessageBoxIcon.Warning);
+					//f.Activate();
+					f.ShowDialog();
+				}
+				else
+				{
+					ini.Write("player2Color", playerColor.A.ToString() + colorSplitter + playerColor.R.ToString() + colorSplitter + playerColor.G.ToString() + colorSplitter + playerColor.B.ToString(), "PvP");
+					f = new MsgForm($"Die Farbe für Spieler 2 wurde auf  \"{dialog.Color.Name}\" gesetzt");
+					//f.Activate();
+					f.ShowDialog();
+					break;
+				}
+			} while (true);
 		}
 
 		public async void ComputerTurn()
 		{
-			CheckVictory();
+			CheckVictoryPvC();
 			
-			if (_turn != Players.Computer) return;
-			//_bord.SetVorhangText("Computer berechnet seinen Zug...");
+			if (_PvCTurn != Players.Computer_Player2) return;
+			//_bord.SetVorhangText("Computer_Player2 berechnet seinen Zug...");
 			//_bord.SetVorhangColor(Color.Green);
 			_bord.stopVorhang = false;
 			_bord.startVorhang = false;
@@ -107,15 +337,15 @@ namespace TikTakToe
 			//frm2.Controls.Add(_bord.Vorhang);
 			//frm2.ShowDialog();
 
-			if (_modus == Mode.einfach)
+			if (_schwierigkeit == Schwierigkeit.einfach)
 			{
 				List<Feld> freeFields = _bord.GetFreeFields();
 				Feld fld = freeFields[rnd.Next(freeFields.Count)];
 				fld.Click(true);
 			}
-			else if (_modus == Mode.mittel)
+			else if (_schwierigkeit == Schwierigkeit.mittel)
 			{
-				Feld fieldToVictory = CheckIfPossibleWinn(Players.Computer);
+				Feld fieldToVictory = CheckIfPossibleWinn(Players.Computer_Player2);
 				if (!(fieldToVictory is null))
 				{
 					fieldToVictory.Click(true);
@@ -169,11 +399,11 @@ namespace TikTakToe
 					}
 				}
 			}
-			else if (_modus == Mode.unmöglich)
+			else if (_schwierigkeit == Schwierigkeit.unmöglich)
 			{
 				var task1 = Task.Factory.StartNew(() => _bord.Vorhang());
 				_bord.startVorhang = true;
-				Feld fieldToVictory = CheckIfPossibleWinn(Players.Computer);
+				Feld fieldToVictory = CheckIfPossibleWinn(Players.Computer_Player2);
 				if (!(fieldToVictory is null))
 				{
 					fieldToVictory.Click(true);
@@ -188,7 +418,7 @@ namespace TikTakToe
 					}
 					else
 					{
-						int id = FindBestTurn(new ShallowBord(this.Bord), Players.Computer, 0);
+						int id = FindBestTurn(new ShallowBord(this.Bord), Players.Computer_Player2, 0);
 						_bord.GetFieldById(id).Click(true);
 					}
 				}
@@ -196,9 +426,10 @@ namespace TikTakToe
 			_bord.stopVorhang = true;
 			_bord.CloseVorhang();
 
-			CheckVictory();
-			_turn = Players.Player;
-			_bord.form.Activate();
+			CheckVictoryPvC();
+			_PvCTurn = Players.Player;
+			Task t = Helper.Activate(this.Bord.form);
+			await t;
 		}
 
 		public Feld CheckIfPossibleWinn(Players checkedPlayer)
@@ -245,63 +476,72 @@ namespace TikTakToe
 			}
 		}
 
-		public void CheckVictory()
+		public void CheckVictoryPvC()
 		{
+			string text = "";
 			if (CheckWin(_bord.feld1, _bord.feld2, _bord.feld3, Players.Player) || CheckWin(_bord.feld4, _bord.feld5, _bord.feld6, Players.Player) || CheckWin(_bord.feld7, _bord.feld8, _bord.feld9, Players.Player) || CheckWin(_bord.feld1, _bord.feld4, _bord.feld7, Players.Player) || CheckWin(_bord.feld2, _bord.feld5, _bord.feld8, Players.Player) || CheckWin(_bord.feld3, _bord.feld6, _bord.feld9, Players.Player) || CheckWin(_bord.feld1, _bord.feld5, _bord.feld9, Players.Player) || CheckWin(_bord.feld3, _bord.feld5, _bord.feld7, Players.Player))
 			{
-				_ended = true;
-				_turn = Players.NoOne;
-				MsgForm frm = new MsgForm("Sie haben gewonnen\nMöchten Sie noch einmal starten?", "", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
-				if (frm.ShowDialog() == DialogResult.Yes)
-				{
-					this._bord.form.Dispose();
-					this._bord.form.Close();
-					Start();
-				}
-				if (System.Windows.Forms.Application.MessageLoop)
-				{
-					// WinForms app
-					System.Windows.Forms.Application.Exit();
-				}
-				else
-				{
-					// Console app
-					System.Environment.Exit(1);
-				}
+				text = "Sie haben gewonnen\nMöchten Sie noch einmal spielen?";
 			}
-			else if (CheckWin(_bord.feld1, _bord.feld2, _bord.feld3, Players.Computer) || CheckWin(_bord.feld4, _bord.feld5, _bord.feld6, Players.Computer) || CheckWin(_bord.feld7, _bord.feld8, _bord.feld9, Players.Computer) || CheckWin(_bord.feld1, _bord.feld4, _bord.feld7, Players.Computer) || CheckWin(_bord.feld2, _bord.feld5, _bord.feld8, Players.Computer) || CheckWin(_bord.feld3, _bord.feld6, _bord.feld9, Players.Computer) || CheckWin(_bord.feld1, _bord.feld5, _bord.feld9, Players.Computer) || CheckWin(_bord.feld3, _bord.feld5, _bord.feld7, Players.Computer))
+			else if (CheckWin(_bord.feld1, _bord.feld2, _bord.feld3, Players.Computer_Player2) || CheckWin(_bord.feld4, _bord.feld5, _bord.feld6, Players.Computer_Player2) || CheckWin(_bord.feld7, _bord.feld8, _bord.feld9, Players.Computer_Player2) || CheckWin(_bord.feld1, _bord.feld4, _bord.feld7, Players.Computer_Player2) || CheckWin(_bord.feld2, _bord.feld5, _bord.feld8, Players.Computer_Player2) || CheckWin(_bord.feld3, _bord.feld6, _bord.feld9, Players.Computer_Player2) || CheckWin(_bord.feld1, _bord.feld5, _bord.feld9, Players.Computer_Player2) || CheckWin(_bord.feld3, _bord.feld5, _bord.feld7, Players.Computer_Player2))
 			{
-				_ended = true;
-				_turn = Players.NoOne;
-				MsgForm frm = new MsgForm("Sie haben verloren\nMöchten Sie noch einmal starten?", "", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
-				if (frm.ShowDialog() == DialogResult.Yes)
-				{
-					this._bord.form.Dispose();
-					this._bord.form.Close();
-					this.Start();
-				}
-				if (System.Windows.Forms.Application.MessageLoop)
-				{
-					// WinForms app
-					System.Windows.Forms.Application.Exit();
-				}
-				else
-				{
-					// Console app
-					System.Environment.Exit(1);
-				}
+				text ="Sie haben verloren\nMöchten Sie noch einmal spielen?";
 			}
 			else if (_bord.GetFreeFields().Count == 0)
 			{
-				_ended = true;
-				_turn = Players.NoOne;
+				text = "Unentschieden\nMöchten Sie noch einmal spielen?";
+			}
 
-				MsgForm frm = new MsgForm("Unentschieden\nMöchten Sie noch einmal starten?", "", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
-				if (frm.ShowDialog() == DialogResult.Yes)
+			if (text != "")
+			{
+				_ended = true;
+				_PvCTurn = Players.NoOne;
+				MsgForm frm = new MsgForm(text, "", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
+				if (frm.ShowDialog(this.Bord.form) == DialogResult.Yes)
 				{
-					this._bord.form.Dispose();
-					this._bord.form.Close();
-					Start();
+					//this._bord.form.Dispose();
+					Application.Restart();
+					Environment.Exit(0);
+				}
+				if (System.Windows.Forms.Application.MessageLoop)
+				{
+					// WinForms app
+					System.Windows.Forms.Application.Exit();
+				}
+				else
+				{
+					// Console app
+					System.Environment.Exit(1);
+				}
+			}
+		}
+		public void CheckVictoryPvP()
+		{
+			string text = "";
+
+			if (CheckWin(_bord.feld1, _bord.feld2, _bord.feld3, PvPPlayers.Player1) || CheckWin(_bord.feld4, _bord.feld5, _bord.feld6, PvPPlayers.Player1) || CheckWin(_bord.feld7, _bord.feld8, _bord.feld9, PvPPlayers.Player1) || CheckWin(_bord.feld1, _bord.feld4, _bord.feld7, PvPPlayers.Player1) || CheckWin(_bord.feld2, _bord.feld5, _bord.feld8, PvPPlayers.Player1) || CheckWin(_bord.feld3, _bord.feld6, _bord.feld9, PvPPlayers.Player1) || CheckWin(_bord.feld1, _bord.feld5, _bord.feld9, PvPPlayers.Player1) || CheckWin(_bord.feld3, _bord.feld5, _bord.feld7, PvPPlayers.Player1))
+			{
+				text = "Spieler 1 hat gewonnen\nMöchten Sie noch einmal spielen?";
+			}
+			else if (CheckWin(_bord.feld1, _bord.feld2, _bord.feld3, PvPPlayers.Player2) || CheckWin(_bord.feld4, _bord.feld5, _bord.feld6, PvPPlayers.Player2) || CheckWin(_bord.feld7, _bord.feld8, _bord.feld9, PvPPlayers.Player2) || CheckWin(_bord.feld1, _bord.feld4, _bord.feld7, PvPPlayers.Player2) || CheckWin(_bord.feld2, _bord.feld5, _bord.feld8, PvPPlayers.Player2) || CheckWin(_bord.feld3, _bord.feld6, _bord.feld9, PvPPlayers.Player2) || CheckWin(_bord.feld1, _bord.feld5, _bord.feld9, PvPPlayers.Player2) || CheckWin(_bord.feld3, _bord.feld5, _bord.feld7, PvPPlayers.Player2))
+			{
+				text = "Spieler 2 hat gewonnen\nMöchten Sie noch einmal spielen?";
+			}
+			else if (_bord.GetFreeFields().Count == 0)
+			{
+				text = "Unentschieden\nMöchten Sie noch einmal spielen?";
+			}
+
+			if (text != "")
+			{
+				_ended = true;
+				_PvCTurn = Players.NoOne;
+				MsgForm frm = new MsgForm(text, "", MessageBoxButtons.YesNo, MessageBoxIcon.Question, MessageBoxDefaultButton.Button2);
+				if (frm.ShowDialog(this.Bord.form) == DialogResult.Yes)
+				{
+					//this._bord.form.Dispose();
+					Application.Restart();
+					Environment.Exit(0);
 				}
 				if (System.Windows.Forms.Application.MessageLoop)
 				{
@@ -324,14 +564,21 @@ namespace TikTakToe
 			}
 			return false;
 		}
+		public bool CheckWin(Feld feld1, Feld feld2, Feld feld3, PvPPlayers player)
+		{
+			if (player == PvPPlayers.Player1)
+				return CheckWin(feld1, feld2, feld3, Players.Player);
+			else
+				return CheckWin(feld1, feld2, feld3, Players.Computer_Player2);
+		}
 
-	
+
 		private int FindBestTurn(ShallowBord bord, Players player, int count)
 		{
 			ShallowBord clone = new ShallowBord();
 			bord.CopyTo(ref clone);
 
-			bool max = player == Players.Computer;
+			bool max = player == Players.Computer_Player2;
 			Dictionary<string, int> best = new Dictionary<string, int>();
 			best.Add("id", -1);
 			best.Add("sc", 2);
@@ -360,19 +607,19 @@ namespace TikTakToe
 				}
 				clone.SetByNum(fld, Players.NoOne, true);
 
-				if (count == 0 && best["sc"] == 1)
-					return best["id"];
+				//if (count == 0 && best["sc"] == 1)
+				//	return best["id"];
 
-				if (max)
-				{
-					if (best["sc"] == 1)
-						return 1;
-				}
-				else
-				{
-					if (best["sc"] == -1)
-						return -1;
-				}
+				//if (max)
+				//{
+				//	if (best["sc"] == 1)
+				//		return 1;
+				//}
+				//else
+				//{
+				//	if (best["sc"] == -1)
+				//		return -1;
+				//}
 			}
 			if (count == 0)
 			{
@@ -389,7 +636,7 @@ namespace TikTakToe
 			Players winner = bord.CheckWin();
 			if (winner != Players.NoOne)
 			{
-				if (winner == Players.Computer)
+				if (winner == Players.Computer_Player2)
 					return 1;
 				else
 					return -1;
@@ -397,13 +644,13 @@ namespace TikTakToe
 			if (bord.GetFreeFields().Count == 0)
 				return 0;
 
-			if (player == Players.Computer)
+			if (player == Players.Computer_Player2)
 			{
 				return FindBestTurn(bord, Players.Player, count + 1);
 			}
 			else
 			{
-				return FindBestTurn(bord, Players.Computer, count + 1);
+				return FindBestTurn(bord, Players.Computer_Player2, count + 1);
 			}
 		}
 	}
@@ -515,9 +762,8 @@ namespace TikTakToe
 
 		public void Show(Players starter = Players.Player)
 		{
-			if (starter == Players.Computer)
+			if (starter == Players.Computer_Player2)
 			{
-				owner.Turn = starter;
 				owner.ComputerTurn();
 			}
 			try 
@@ -575,7 +821,7 @@ namespace TikTakToe
 
 		public async Task Vorhang()
 		{
-			this.vorhang = new MsgForm("Der Computer berechnet seinen Zug...");
+			this.vorhang = new MsgForm("Der Computer_Player2 berechnet seinen Zug...");
 			while (true)
 			{
 				if (stopVorhang)
@@ -599,33 +845,19 @@ namespace TikTakToe
 			}
 			return false;
 		}
-		//private void AllControls(Control c, bool hide)
-		//{
-		//	if (hide)
-		//	{
-		//		c.SendToBack();
-		//		foreach (Control child in c.Controls)
-		//		{
-		//			AllControls(child, true);
-		//		}
-		//	}
-		//	else
-		//	{
-		//		c.BringToFront();
-		//		foreach (Control child in c.Controls)
-		//		{
-		//			AllControls(child, false);
-		//		}
-		//	}
-		//}
-		//public void SetVorhangText(string text)
-		//{
-		//	this.vorhang.Text = text;
-		//}
-		//public void SetVorhangColor(Color color)
-		//{
-		//	this.vorhang.BackColor = color;
-		//}
+		
+		public async void ResetFields()
+		{
+			await feld1.SetStatus(Players.NoOne, true);
+			await feld2.SetStatus(Players.NoOne, true);
+			await feld3.SetStatus(Players.NoOne, true);
+			await feld4.SetStatus(Players.NoOne, true);
+			await feld5.SetStatus(Players.NoOne, true);
+			await feld6.SetStatus(Players.NoOne, true);
+			await feld7.SetStatus(Players.NoOne, true);
+			await feld8.SetStatus(Players.NoOne, true);
+			await feld9.SetStatus(Players.NoOne, true);
+		}
 	}
 
 	class ShallowBord
@@ -700,8 +932,8 @@ namespace TikTakToe
 
 		public bool CheckPossibleWin(Players f1, Players f2, Players f3, Players player)
 		{
-			Players opposite = Players.Computer;
-			if (player == Players.Computer)
+			Players opposite = Players.Computer_Player2;
+			if (player == Players.Computer_Player2)
 				opposite = Players.Player;
 
 			if (f1 == opposite || f2 == opposite || f3 == opposite)
@@ -786,7 +1018,7 @@ namespace TikTakToe
 		public readonly int id;
 		private TikTakToe owner;
 		private Label _label;
-		private Panel _panel;
+		//private Panel panel;
 		private Point _location;
 		public Point Location { get { return _location; } }
 		private Size _size;
@@ -804,16 +1036,16 @@ namespace TikTakToe
 			int size = 81;
 			int marginWidth = 1;
 
-			Panel panel = new Panel();
-			panel.BackColor = Color.White;
-			panel.Size = new Size(size, size);
-			panel.Margin = new Padding(marginWidth);
-			panel.BorderStyle = BorderStyle.FixedSingle;
-			panel.Location = new Point(spalte * size + 2 * marginWidth, zeile * size + 2 * marginWidth);
-			panel.Click += Click_Event;
-			this._panel = panel;
+			//Panel panel = new Panel();
+			//panel.BackColor = Color.White;
+			//panel.Size = new Size(size, size);
+			//panel.Margin = new Padding(marginWidth);
+			//panel.BorderStyle = BorderStyle.FixedSingle;
+			//panel.Location = new Point(spalte * size + 2 * marginWidth, zeile * size + 2 * marginWidth);
+			//panel.Click += Click_Event;
+			//this._panel = panel;
 
-			frm.Controls.Add(panel);
+			//frm.Controls.Add(panel);
 
 			Label lbl = new Label();
 			lbl.ForeColor = Color.Black;
@@ -822,8 +1054,8 @@ namespace TikTakToe
 			lbl.AutoSize = false;
 			lbl.TextAlign = ContentAlignment.MiddleCenter;
 			lbl.Font = new Font(lbl.Font.FontFamily, size);
-			lbl.Size = panel.Size;
-			lbl.Location = panel.Location;
+			lbl.Size = new Size(size, size);
+			lbl.Location = new Point(spalte * size + 2 * marginWidth, zeile * size + 2 * marginWidth);
 			lbl.Click += Click_Event;
 			this._label = lbl;
 			SetStatus(player, true);
@@ -849,17 +1081,57 @@ namespace TikTakToe
 
 			if (fieldOwner == Players.Player)
 			{
-				this._label.Text = "X";
-				Task t = Helper.ChangeColor(this._label, Color.Red);
+				//this._label.Text = "X";
+				Task t = Helper.ChangeColor(this._label, owner.playerColor);
 				await t;
-				this._label.ForeColor = Color.Blue;
+				//this._label.ForeColor = Color.Blue;
 			}
-			else if (fieldOwner == Players.Computer)
+			else if (fieldOwner == Players.Computer_Player2)
 			{
-				this._label.Text = "O";
-				Task t = Helper.ChangeColor(this._label, Color.Blue);
+				//this._label.Text = "O";
+				Task t = Helper.ChangeColor(this._label, owner.computerColor);
 				await t;
-				this._label.ForeColor = Color.Red;
+				//this._label.ForeColor = Color.Red;
+			}
+			else if (fieldOwner == Players.NoOne)
+			{
+				//this._label.Text = "";
+				Task t = Helper.ChangeColor(this._label, Color.White);
+				await t;
+			}
+			return true;
+		}
+
+		public async Task<bool> SetStatusPvP(Players newOwner, bool force = false)
+		{
+			if (!force)
+			{
+				if (fieldOwner != Players.NoOne || newOwner == Players.NoOne)
+				{
+					return false;
+				}
+			}
+			fieldOwner = newOwner;
+
+			if (fieldOwner == Players.Player)
+			{
+				//this._label.Text = "X";
+				Task t = Helper.ChangeColor(this._label, owner.playerColor);
+				await t;
+				//this._label.ForeColor = Color.Blue;
+			}
+			else if (fieldOwner == Players.Computer_Player2)
+			{
+				//this._label.Text = "O";
+				Task t = Helper.ChangeColor(this._label, owner.computerColor);
+				await t;
+				//this._label.ForeColor = Color.Red;
+			}
+			else if (fieldOwner == Players.NoOne)
+			{
+				//this._label.Text = "";
+				Task t = Helper.ChangeColor(this._label, Color.White);
+				await t;
 			}
 			return true;
 		}
@@ -875,30 +1147,55 @@ namespace TikTakToe
 		}
 		public bool Click(bool computer)
 		{
-			if (owner.Turn == Players.Player && computer == false)
+			if (this.owner.Modus == Modus.PvC)
 			{
-				if (SetStatus(Players.Player).Result)
+				if (owner.PvCTurn == Players.Player && computer == false)
 				{
-					owner.Turn = Players.Computer;
-					owner.ComputerTurn();
+					if (SetStatus(Players.Player).Result)
+					{
+						owner.PvCTurn = Players.Computer_Player2;
+						owner.ComputerTurn();
+					}
+					else
+					{
+						return false;
+					}
+				}
+				else if (owner.PvCTurn == Players.Computer_Player2 && computer == true)
+				{
+					if (SetStatus(Players.Computer_Player2).Result)
+					{
+						return true;
+					}
+					else
+					{
+						return false;
+					}
+				}
+				return false;
+			}
+			else
+			{
+				if (this.owner.PvPTurn == PvPPlayers.Player1)
+				{
+					if (SetStatusPvP(Players.Player).Result)
+					{
+						this.owner.CheckVictoryPvP();
+						this.owner.PvPTurn = PvPPlayers.Player2;
+						return true;
+					}
 				}
 				else
 				{
-					return false;
+					if (SetStatusPvP(Players.Computer_Player2).Result)
+					{
+						this.owner.CheckVictoryPvP();
+						this.owner.PvPTurn = PvPPlayers.Player1;
+						return true;
+					}
 				}
+				return false;
 			}
-			else if (owner.Turn == Players.Computer && computer == true)
-			{
-				if (SetStatus(Players.Computer).Result)
-				{
-					return true;
-				}
-				else
-				{
-					return false;
-				}
-			}
-			return false;
 		}
 	}
 
@@ -912,31 +1209,35 @@ namespace TikTakToe
 		}
 		private static void SafeInvoke(Control uiElement, Action updater, bool forceSynchronous)
 		{
-			if (uiElement == null)
+			try
 			{
-				throw new ArgumentNullException("uiElement");
-			}
-
-			if (uiElement.InvokeRequired)
-			{
-				if (forceSynchronous)
+				if (uiElement == null)
 				{
-					uiElement.Invoke((Action)delegate { SafeInvoke(uiElement, updater, forceSynchronous); });
+					throw new ArgumentNullException("uiElement");
+				}
+
+				if (uiElement.InvokeRequired)
+				{
+					if (forceSynchronous)
+					{
+						uiElement.Invoke((Action)delegate { SafeInvoke(uiElement, updater, forceSynchronous); });
+					}
+					else
+					{
+						uiElement.BeginInvoke((Action)delegate { SafeInvoke(uiElement, updater, forceSynchronous); });
+					}
 				}
 				else
 				{
-					uiElement.BeginInvoke((Action)delegate { SafeInvoke(uiElement, updater, forceSynchronous); });
-				}
-			}
-			else
-			{
-				if (uiElement.IsDisposed)
-				{
-					throw new ObjectDisposedException("Control is already disposed.");
-				}
+					if (uiElement.IsDisposed)
+					{
+						throw new ObjectDisposedException("Control is already disposed.");
+					}
 
-				updater();
+					updater();
+				}
 			}
+			catch { }
 		}
 
 		public async static Task ToFront(Control ctrl)
@@ -945,10 +1246,73 @@ namespace TikTakToe
 			ctrl.Refresh();
 			ctrl.Update();
 		}
+
+		public async static Task Activate(Form ctrl)
+		{
+			SafeInvoke(ctrl, delegate () { ctrl.Activate(); }, false);
+			ctrl.Refresh();
+			ctrl.Update();
+		}
+
+		 
+
+	}
+
+
+	class IniFile   // https://stackoverflow.com/a/14906422
+	{
+		string path;
+		string EXE = Assembly.GetExecutingAssembly().GetName().Name;
+
+		[DllImport("kernel32", CharSet = CharSet.Unicode)]
+		static extern long WritePrivateProfileString(string Section, string Key, string Value, string FilePath);
+
+		[DllImport("kernel32", CharSet = CharSet.Unicode)]
+		static extern int GetPrivateProfileString(string Section, string Key, string Default, StringBuilder RetVal, int Size, string FilePath);
+
+		public IniFile(string IniPath = null)
+		{
+			path = Path.GetFullPath(IniPath ?? Path.ChangeExtension(Application.ExecutablePath, ".ini"));
+		}
+
+		public string Read(string Key, string Section = null)
+		{
+			var RetVal = new StringBuilder(255);
+			GetPrivateProfileString(Section ?? EXE, Key, "", RetVal, 255, path);
+			return RetVal.ToString();
+		}
+
+		public void Write(string Key, string Value, string Section = null)
+		{
+			WritePrivateProfileString(Section ?? EXE, Key, Value, path);
+		}
+
+		public void DeleteKey(string Key, string Section = null)
+		{
+			Write(Key, null, Section ?? EXE);
+		}
+
+		public void DeleteSection(string Section = null)
+		{
+			Write(null, null, Section ?? EXE);
+		}
+
+		public bool KeyExists(string Key, string Section = null)
+		{
+			return Read(Key, Section).Length > 0;
+		}
 	}
 
 	enum Players{
-		NoOne, Computer, Player
+		NoOne, Player, Computer_Player2
+	}
+	enum Modus
+	{
+		PvP, PvC
+	}
+	enum PvPPlayers
+	{
+		Player1, Player2, NoOne
 	}
 
 }
