@@ -123,10 +123,11 @@ namespace TikTakToe
 			while (true)
 			{
 				MsgForm frm = new MsgForm("Gegen wen wollen Sie spielen?", "", MessageBoxButtons.AbortRetryIgnore);
-				frm.SetButtonsText("Spieler", "Computer", "");
+				frm.SetButtonsText("Spieler", "Computer", "Online");
 				DialogResult answer = frm.ShowDialog();
 				if (answer == DialogResult.Abort)
 				{
+					_modus = Modus.PvP;
 					if (player1Color == player2Color)
 						SetColorsPvP();
 					frm = new MsgForm("", "", MessageBoxButtons.YesNo);
@@ -142,19 +143,14 @@ namespace TikTakToe
 					{
 						SetColorsPvP();
 					}
-					else if (a == DialogResult.Ignore)
-					{
-						MsgForm f = new MsgForm("Dieser Modus existiert nocht nicht");
-						f.ShowDialog();
-						return;
-					}
 					else
 					{
 						return;
 					}
 				}
-				else if (answer == DialogResult.No)
+				else if (answer == DialogResult.Retry)
 				{
+					_modus = Modus.PvC;
 
 					if (computerColor == playerColor)
 						SetColorsPvC();
@@ -202,6 +198,12 @@ namespace TikTakToe
 					{
 						return;
 					}
+				}
+				else if (answer == DialogResult.Ignore)
+				{
+					MsgForm f = new MsgForm("Dieser Modus existiert nocht nicht");
+					f.ShowDialog();
+					Start();
 				}
 				else
 				{
@@ -336,7 +338,8 @@ namespace TikTakToe
 			//_bord.SetVorhangText("Computer_Player2 berechnet seinen Zug...");
 			//_bord.SetVorhangColor(Color.Green);
 			_bord.stopVorhang = false;
-			_bord.startVorhang = false;
+			_bord.startVorhang = true;
+			var task1 = Task.Factory.StartNew(() => _bord.Vorhang("Der Computer_Player2 berechnet seinen Zug..."));
 			//_bord.Vorhang();
 			//_bord.Vorhang.BringToFront();
 			//Form frm2 = new Form();
@@ -407,8 +410,6 @@ namespace TikTakToe
 			}
 			else if (_schwierigkeit == Schwierigkeit.unmöglich)
 			{
-				var task1 = Task.Factory.StartNew(() => _bord.Vorhang());
-				_bord.startVorhang = true;
 				Feld fieldToVictory = CheckIfPossibleWinn(Players.Computer_Player2);
 				if (!(fieldToVictory is null))
 				{
@@ -818,7 +819,7 @@ namespace TikTakToe
 			return newBord;
 		}
 
-		public async Task Vorhang()
+		public async Task Vorhang(string text)
 		{
 			this.vorhang = new MsgForm("Der Computer_Player2 berechnet seinen Zug...");
 			while (true)
