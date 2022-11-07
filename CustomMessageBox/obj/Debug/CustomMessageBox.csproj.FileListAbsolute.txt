@@ -31,3 +31,14 @@ C:\Users\renne\source\repos\TikTakToe\CustomMessageBox\obj\Debug\CustomMessageBo
 C:\Users\renne\source\repos\TikTakToe\CustomMessageBox\obj\Debug\CustomMessageBox.csproj.CoreCompileInputs.cache
 C:\Users\renne\source\repos\TikTakToe\CustomMessageBox\obj\Debug\CustomMessageBox.exe
 C:\Users\renne\source\repos\TikTakToe\CustomMessageBox\obj\Debug\CustomMessageBox.pdb
+C:\Users\srenner\Documents\Tik Tak Toe\CustomMessageBox\bin\Debug\CustomMessageBox.exe.config
+C:\Users\srenner\Documents\Tik Tak Toe\CustomMessageBox\bin\Debug\CustomMessageBox.exe
+C:\Users\srenner\Documents\Tik Tak Toe\CustomMessageBox\bin\Debug\CustomMessageBox.pdb
+C:\Users\srenner\Documents\Tik Tak Toe\CustomMessageBox\obj\Debug\CustomMessageBox.csproj.AssemblyReference.cache
+C:\Users\srenner\Documents\Tik Tak Toe\CustomMessageBox\obj\Debug\CustomMessageBox.csproj.SuggestedBindingRedirects.cache
+C:\Users\srenner\Documents\Tik Tak Toe\CustomMessageBox\obj\Debug\CustomMessageBox.Private.MsgForm.resources
+C:\Users\srenner\Documents\Tik Tak Toe\CustomMessageBox\obj\Debug\CustomMessageBox.Properties.Resources.resources
+C:\Users\srenner\Documents\Tik Tak Toe\CustomMessageBox\obj\Debug\CustomMessageBox.csproj.GenerateResource.cache
+C:\Users\srenner\Documents\Tik Tak Toe\CustomMessageBox\obj\Debug\CustomMessageBox.csproj.CoreCompileInputs.cache
+C:\Users\srenner\Documents\Tik Tak Toe\CustomMessageBox\obj\Debug\CustomMessageBox.exe
+C:\Users\srenner\Documents\Tik Tak Toe\CustomMessageBox\obj\Debug\CustomMessageBox.pdb

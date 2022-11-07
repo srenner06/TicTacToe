@@ -42,8 +42,8 @@ namespace TikTakToe
 		private Players _PvCTurn;
 		public Players PvCTurn { get { return _PvCTurn; } set { _PvCTurn = value; } }
 
-		private PvPPlayers _PvPTurn;
-		public PvPPlayers PvPTurn { get { return _PvPTurn; } set { _PvPTurn = value; } }
+		private Players _PvPTurn;
+		public Players PvPTurn { get { return _PvPTurn; } set { _PvPTurn = value; } }
 
 		public Bord Bord
 		{
@@ -122,10 +122,10 @@ namespace TikTakToe
 			this.Bord.ResetFields();
 			while (true)
 			{
-				MsgForm frm = new MsgForm("Gegen wen wollen Sie spielen?", "", MessageBoxButtons.OKCancel);
+				MsgForm frm = new MsgForm("Gegen wen wollen Sie spielen?", "", MessageBoxButtons.AbortRetryIgnore);
 				frm.SetButtonsText("Spieler", "Computer", "");
 				DialogResult answer = frm.ShowDialog();
-				if (answer == DialogResult.OK)
+				if (answer == DialogResult.Abort)
 				{
 					if (player1Color == player2Color)
 						SetColorsPvP();
@@ -135,12 +135,18 @@ namespace TikTakToe
 					if (a == DialogResult.Yes)
 					{
 						PvCTurn = Players.NoOne;
-						PvPTurn = PvPPlayers.Player1;
+						PvPTurn = Players.Player1;
 						break;
 					}
-					else if (a == DialogResult.No)
+					else if (a == DialogResult.Retry)
 					{
 						SetColorsPvP();
+					}
+					else if (a == DialogResult.Ignore)
+					{
+						MsgForm f = new MsgForm("Dieser Modus existiert nocht nicht");
+						f.ShowDialog();
+						return;
 					}
 					else
 					{
@@ -180,7 +186,7 @@ namespace TikTakToe
 					DialogResult starterResult = starter.ShowDialog(this.Bord.form);
 					if (starterResult == DialogResult.Abort)
 					{
-						_PvCTurn = Players.Player;
+						_PvCTurn = Players.Player1;
 						break;
 					}
 					else if (starterResult == DialogResult.Retry)
@@ -211,7 +217,7 @@ namespace TikTakToe
 			ColorDialog dialog = new ColorDialog();
 			do
 			{
-				f = new MsgForm("Bitte die Farbe für den Coputer auswählen");
+				f = new MsgForm("Bitte die Farbe für den Computer auswählen");
 				//f.Activate();
 				f.ShowDialog();
 				dialog.ShowDialog();
@@ -352,8 +358,8 @@ namespace TikTakToe
 				}
 				else
 				{
-					//Check if Player can win
-					Feld fieldToDefeat = CheckIfPossibleWinn(Players.Player);
+					//Check if Player1 can win
+					Feld fieldToDefeat = CheckIfPossibleWinn(Players.Player1);
 					if (!(fieldToDefeat is null))
 					{
 						fieldToDefeat.Click(true);
@@ -410,8 +416,8 @@ namespace TikTakToe
 				}
 				else
 				{
-					//Check if Player can win
-					Feld fieldToDefeat = CheckIfPossibleWinn(Players.Player);
+					//Check if Player1 can win
+					Feld fieldToDefeat = CheckIfPossibleWinn(Players.Player1);
 					if (!(fieldToDefeat is null))
 					{
 						fieldToDefeat.Click(true);
@@ -427,7 +433,7 @@ namespace TikTakToe
 			_bord.CloseVorhang();
 
 			CheckVictoryPvC();
-			_PvCTurn = Players.Player;
+			_PvCTurn = Players.Player1;
 			Task t = Helper.Activate(this.Bord.form);
 			await t;
 		}
@@ -479,7 +485,7 @@ namespace TikTakToe
 		public void CheckVictoryPvC()
 		{
 			string text = "";
-			if (CheckWin(_bord.feld1, _bord.feld2, _bord.feld3, Players.Player) || CheckWin(_bord.feld4, _bord.feld5, _bord.feld6, Players.Player) || CheckWin(_bord.feld7, _bord.feld8, _bord.feld9, Players.Player) || CheckWin(_bord.feld1, _bord.feld4, _bord.feld7, Players.Player) || CheckWin(_bord.feld2, _bord.feld5, _bord.feld8, Players.Player) || CheckWin(_bord.feld3, _bord.feld6, _bord.feld9, Players.Player) || CheckWin(_bord.feld1, _bord.feld5, _bord.feld9, Players.Player) || CheckWin(_bord.feld3, _bord.feld5, _bord.feld7, Players.Player))
+			if (CheckWin(_bord.feld1, _bord.feld2, _bord.feld3, Players.Player1) || CheckWin(_bord.feld4, _bord.feld5, _bord.feld6, Players.Player1) || CheckWin(_bord.feld7, _bord.feld8, _bord.feld9, Players.Player1) || CheckWin(_bord.feld1, _bord.feld4, _bord.feld7, Players.Player1) || CheckWin(_bord.feld2, _bord.feld5, _bord.feld8, Players.Player1) || CheckWin(_bord.feld3, _bord.feld6, _bord.feld9, Players.Player1) || CheckWin(_bord.feld1, _bord.feld5, _bord.feld9, Players.Player1) || CheckWin(_bord.feld3, _bord.feld5, _bord.feld7, Players.Player1))
 			{
 				text = "Sie haben gewonnen\nMöchten Sie noch einmal spielen?";
 			}
@@ -519,11 +525,11 @@ namespace TikTakToe
 		{
 			string text = "";
 
-			if (CheckWin(_bord.feld1, _bord.feld2, _bord.feld3, PvPPlayers.Player1) || CheckWin(_bord.feld4, _bord.feld5, _bord.feld6, PvPPlayers.Player1) || CheckWin(_bord.feld7, _bord.feld8, _bord.feld9, PvPPlayers.Player1) || CheckWin(_bord.feld1, _bord.feld4, _bord.feld7, PvPPlayers.Player1) || CheckWin(_bord.feld2, _bord.feld5, _bord.feld8, PvPPlayers.Player1) || CheckWin(_bord.feld3, _bord.feld6, _bord.feld9, PvPPlayers.Player1) || CheckWin(_bord.feld1, _bord.feld5, _bord.feld9, PvPPlayers.Player1) || CheckWin(_bord.feld3, _bord.feld5, _bord.feld7, PvPPlayers.Player1))
+			if (CheckWin(_bord.feld1, _bord.feld2, _bord.feld3, Players.Player1) || CheckWin(_bord.feld4, _bord.feld5, _bord.feld6, Players.Player1) || CheckWin(_bord.feld7, _bord.feld8, _bord.feld9, Players.Player1) || CheckWin(_bord.feld1, _bord.feld4, _bord.feld7, Players.Player1) || CheckWin(_bord.feld2, _bord.feld5, _bord.feld8, Players.Player1) || CheckWin(_bord.feld3, _bord.feld6, _bord.feld9, Players.Player1) || CheckWin(_bord.feld1, _bord.feld5, _bord.feld9, Players.Player1) || CheckWin(_bord.feld3, _bord.feld5, _bord.feld7, Players.Player1))
 			{
 				text = "Spieler 1 hat gewonnen\nMöchten Sie noch einmal spielen?";
 			}
-			else if (CheckWin(_bord.feld1, _bord.feld2, _bord.feld3, PvPPlayers.Player2) || CheckWin(_bord.feld4, _bord.feld5, _bord.feld6, PvPPlayers.Player2) || CheckWin(_bord.feld7, _bord.feld8, _bord.feld9, PvPPlayers.Player2) || CheckWin(_bord.feld1, _bord.feld4, _bord.feld7, PvPPlayers.Player2) || CheckWin(_bord.feld2, _bord.feld5, _bord.feld8, PvPPlayers.Player2) || CheckWin(_bord.feld3, _bord.feld6, _bord.feld9, PvPPlayers.Player2) || CheckWin(_bord.feld1, _bord.feld5, _bord.feld9, PvPPlayers.Player2) || CheckWin(_bord.feld3, _bord.feld5, _bord.feld7, PvPPlayers.Player2))
+			else if (CheckWin(_bord.feld1, _bord.feld2, _bord.feld3, Players.Computer_Player2) || CheckWin(_bord.feld4, _bord.feld5, _bord.feld6, Players.Computer_Player2) || CheckWin(_bord.feld7, _bord.feld8, _bord.feld9, Players.Computer_Player2) || CheckWin(_bord.feld1, _bord.feld4, _bord.feld7, Players.Computer_Player2) || CheckWin(_bord.feld2, _bord.feld5, _bord.feld8, Players.Computer_Player2) || CheckWin(_bord.feld3, _bord.feld6, _bord.feld9, Players.Computer_Player2) || CheckWin(_bord.feld1, _bord.feld5, _bord.feld9, Players.Computer_Player2) || CheckWin(_bord.feld3, _bord.feld5, _bord.feld7, Players.Computer_Player2))
 			{
 				text = "Spieler 2 hat gewonnen\nMöchten Sie noch einmal spielen?";
 			}
@@ -563,13 +569,6 @@ namespace TikTakToe
 				return true;
 			}
 			return false;
-		}
-		public bool CheckWin(Feld feld1, Feld feld2, Feld feld3, PvPPlayers player)
-		{
-			if (player == PvPPlayers.Player1)
-				return CheckWin(feld1, feld2, feld3, Players.Player);
-			else
-				return CheckWin(feld1, feld2, feld3, Players.Computer_Player2);
 		}
 
 
@@ -646,7 +645,7 @@ namespace TikTakToe
 
 			if (player == Players.Computer_Player2)
 			{
-				return FindBestTurn(bord, Players.Player, count + 1);
+				return FindBestTurn(bord, Players.Player1, count + 1);
 			}
 			else
 			{
@@ -760,7 +759,7 @@ namespace TikTakToe
 			form = frm;
 		}
 
-		public void Show(Players starter = Players.Player)
+		public void Show(Players starter = Players.Player1)
 		{
 			if (starter == Players.Computer_Player2)
 			{
@@ -934,7 +933,7 @@ namespace TikTakToe
 		{
 			Players opposite = Players.Computer_Player2;
 			if (player == Players.Computer_Player2)
-				opposite = Players.Player;
+				opposite = Players.Player1;
 
 			if (f1 == opposite || f2 == opposite || f3 == opposite)
 				return false;
@@ -1079,7 +1078,7 @@ namespace TikTakToe
 			}
 			fieldOwner = newOwner;
 
-			if (fieldOwner == Players.Player)
+			if (fieldOwner == Players.Player1)
 			{
 				//this._label.Text = "X";
 				Task t = Helper.ChangeColor(this._label, owner.playerColor);
@@ -1113,7 +1112,7 @@ namespace TikTakToe
 			}
 			fieldOwner = newOwner;
 
-			if (fieldOwner == Players.Player)
+			if (fieldOwner == Players.Player1)
 			{
 				//this._label.Text = "X";
 				Task t = Helper.ChangeColor(this._label, owner.playerColor);
@@ -1149,9 +1148,9 @@ namespace TikTakToe
 		{
 			if (this.owner.Modus == Modus.PvC)
 			{
-				if (owner.PvCTurn == Players.Player && computer == false)
+				if (owner.PvCTurn == Players.Player1 && computer == false)
 				{
-					if (SetStatus(Players.Player).Result)
+					if (SetStatus(Players.Player1).Result)
 					{
 						owner.PvCTurn = Players.Computer_Player2;
 						owner.ComputerTurn();
@@ -1176,12 +1175,12 @@ namespace TikTakToe
 			}
 			else
 			{
-				if (this.owner.PvPTurn == PvPPlayers.Player1)
+				if (this.owner.PvPTurn == Players.Player1)
 				{
-					if (SetStatusPvP(Players.Player).Result)
+					if (SetStatusPvP(Players.Player1).Result)
 					{
 						this.owner.CheckVictoryPvP();
-						this.owner.PvPTurn = PvPPlayers.Player2;
+						this.owner.PvPTurn = Players.Computer_Player2;
 						return true;
 					}
 				}
@@ -1190,7 +1189,7 @@ namespace TikTakToe
 					if (SetStatusPvP(Players.Computer_Player2).Result)
 					{
 						this.owner.CheckVictoryPvP();
-						this.owner.PvPTurn = PvPPlayers.Player1;
+						this.owner.PvPTurn = Players.Player1;
 						return true;
 					}
 				}
@@ -1304,15 +1303,11 @@ namespace TikTakToe
 	}
 
 	enum Players{
-		NoOne, Player, Computer_Player2
+		NoOne, Player1, Computer_Player2
 	}
 	enum Modus
 	{
 		PvP, PvC
-	}
-	enum PvPPlayers
-	{
-		Player1, Player2, NoOne
 	}
 
 }
