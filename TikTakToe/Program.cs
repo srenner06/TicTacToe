@@ -207,7 +207,16 @@ namespace TikTakToe
 				}
 				else
 				{
-					return;
+					if (System.Windows.Forms.Application.MessageLoop)
+					{
+						// WinForms app
+						System.Windows.Forms.Application.Exit();
+					}
+					else
+					{
+						// Console app
+						System.Environment.Exit(1);
+					}
 				}
 			}
 			Bord.Show(_PvCTurn);
@@ -339,7 +348,7 @@ namespace TikTakToe
 			//_bord.SetVorhangColor(Color.Green);
 			_bord.stopVorhang = false;
 			_bord.startVorhang = true;
-			var task1 = Task.Factory.StartNew(() => _bord.Vorhang("Der Computer_Player2 berechnet seinen Zug..."));
+			var task1 = Task.Factory.StartNew(() => _bord.Vorhang("Der Computer berechnet seinen Zug..."));
 			//_bord.Vorhang();
 			//_bord.Vorhang.BringToFront();
 			//Form frm2 = new Form();
