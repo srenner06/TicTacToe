@@ -434,7 +434,7 @@ namespace TikTakToe
 					}
 					else
 					{
-						int id = FindBestTurn(new ShallowBord(this.Bord), Players.Computer_Player2, 0);
+						int id = FindBestTurn(this.Bord, Players.Computer_Player2, 0);
 						_bord.GetFieldById(id).Click(true);
 					}
 				}
@@ -989,6 +989,7 @@ namespace TikTakToe
 
 			return list;
 		}
+
 		public void SetByNum(int i, Players player, bool force = false)
 		{
 			if (force)
@@ -1014,6 +1015,12 @@ namespace TikTakToe
 			if (i == 7 || feld7 == Players.NoOne) feld7 = player;
 			if (i == 8 || feld8 == Players.NoOne) feld8 = player;
 			if (i == 9 || feld9 == Players.NoOne) feld9 = player;
+		}
+
+		public static implicit operator ShallowBord(Bord b)
+		{
+			var sh = new ShallowBord(b);
+			return sh;
 		}
 
 	}
@@ -1279,34 +1286,34 @@ namespace TikTakToe
 		[DllImport("kernel32", CharSet = CharSet.Unicode)]
 		static extern int GetPrivateProfileString(string Section, string Key, string Default, StringBuilder RetVal, int Size, string FilePath);
 
-		public IniFile(string IniPath = null)
+		public IniFile(string? IniPath = null)
 		{
 			path = Path.GetFullPath(IniPath ?? Path.ChangeExtension(Application.ExecutablePath, ".ini"));
 		}
 
-		public string Read(string Key, string Section = null)
+		public string Read(string Key, string? Section = null)
 		{
 			var RetVal = new StringBuilder(255);
 			GetPrivateProfileString(Section ?? EXE, Key, "", RetVal, 255, path);
 			return RetVal.ToString();
 		}
 
-		public void Write(string Key, string Value, string Section = null)
+		public void Write(string? Key, string? Value, string? Section = null)
 		{
 			WritePrivateProfileString(Section ?? EXE, Key, Value, path);
 		}
 
-		public void DeleteKey(string Key, string Section = null)
+		public void DeleteKey(string Key, string? Section = null)
 		{
 			Write(Key, null, Section ?? EXE);
 		}
 
-		public void DeleteSection(string Section = null)
+		public void DeleteSection(string? Section = null)
 		{
 			Write(null, null, Section ?? EXE);
 		}
 
-		public bool KeyExists(string Key, string Section = null)
+		public bool KeyExists(string Key, string? Section = null)
 		{
 			return Read(Key, Section).Length > 0;
 		}
