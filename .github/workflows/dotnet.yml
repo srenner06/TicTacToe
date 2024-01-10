@@ -31,6 +31,9 @@ jobs:
 
     - name: ⬇️ Checkout code
       uses: actions/checkout@v3
+      with:
+        submodules: recursive
+        token: ${{ secrets.PAT_TOKEN }}
         
     - name: 🔍 Restore dependencies
       run: dotnet restore
