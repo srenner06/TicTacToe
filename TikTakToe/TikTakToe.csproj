@@ -9,7 +9,14 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="8.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\CustomMessageBox\CustomMessageBox.csproj" />
+    <ProjectReference Include="..\TikTakToe Lib\TikTakToe Lib.csproj" />
+    <ProjectReference Include="..\Utils\Utils.Windows\Utils.Windows.csproj" />
+    <ProjectReference Include="..\Utils\Utils\Utils.csproj" />
   </ItemGroup>
 
 </Project>

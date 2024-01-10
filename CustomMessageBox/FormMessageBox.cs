@@ -1,12 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
-using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace CustomMessageBox.Private
@@ -72,14 +66,14 @@ namespace CustomMessageBox.Private
 		}
 		private void SetFormSize()
 		{
-			int widht = this.labelMessage.Width + this.pictureBoxIcon.Width + this.panelBody.Padding.Left;
-			int height = this.panelTitleBar.Height + this.labelMessage.Height + this.panelButtons.Height + this.panelBody.Padding.Top;
+			var widht = this.labelMessage.Width + this.pictureBoxIcon.Width + this.panelBody.Padding.Left;
+			var height = this.panelTitleBar.Height + this.labelMessage.Height + this.panelButtons.Height + this.panelBody.Padding.Top;
 			this.Size = new Size(widht, height);
 		}
 		private void SetButtons(MessageBoxButtons buttons, MessageBoxDefaultButton defaultButton)
 		{
-			int xCenter = (this.panelButtons.Width - button1.Width) / 2;
-			int yCenter = (this.panelButtons.Height - button1.Height) / 2;
+			var xCenter = (this.panelButtons.Width - button1.Width) / 2;
+			var yCenter = (this.panelButtons.Height - button1.Height) / 2;
 
 			switch (buttons)
 			{
@@ -110,7 +104,8 @@ namespace CustomMessageBox.Private
 					//Set Default Button
 					if (defaultButton != MessageBoxDefaultButton.Button3)//There are only 2 buttons, so the Default Button cannot be Button3
 						SetDefaultButton(defaultButton);
-					else SetDefaultButton(MessageBoxDefaultButton.Button1);
+					else
+						SetDefaultButton(MessageBoxDefaultButton.Button1);
 					break;
 
 				case MessageBoxButtons.RetryCancel:
@@ -130,7 +125,8 @@ namespace CustomMessageBox.Private
 					//Set Default Button
 					if (defaultButton != MessageBoxDefaultButton.Button3)//There are only 2 buttons, so the Default Button cannot be Button3
 						SetDefaultButton(defaultButton);
-					else SetDefaultButton(MessageBoxDefaultButton.Button1);
+					else
+						SetDefaultButton(MessageBoxDefaultButton.Button1);
 					break;
 
 				case MessageBoxButtons.YesNo:
@@ -150,7 +146,8 @@ namespace CustomMessageBox.Private
 					//Set Default Button
 					if (defaultButton != MessageBoxDefaultButton.Button3)//There are only 2 buttons, so the Default Button cannot be Button3
 						SetDefaultButton(defaultButton);
-					else SetDefaultButton(MessageBoxDefaultButton.Button1);
+					else
+						SetDefaultButton(MessageBoxDefaultButton.Button1);
 					break;
 				case MessageBoxButtons.YesNoCancel:
 					//Yes Button
@@ -266,9 +263,9 @@ namespace CustomMessageBox.Private
 
 		#region -> Drag Form
 		[DllImport("user32.DLL", EntryPoint = "SendMessage")]
-		private extern static void SendMessage(System.IntPtr hWnd, int wMsg, int wParam, int lParam);
+		private static extern void SendMessage(System.IntPtr hWnd, int wMsg, int wParam, int lParam);
 		[DllImport("user32.DLL", EntryPoint = "ReleaseCapture")]
-		private extern static void ReleaseCapture();
+		private static extern void ReleaseCapture();
 		private void panelTitleBar_MouseDown(object sender, MouseEventArgs e)
 		{
 			ReleaseCapture();
