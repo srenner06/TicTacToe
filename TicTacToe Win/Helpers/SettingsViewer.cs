@@ -1,8 +1,8 @@
-﻿using TicTacToe_WIn.Helpers;
+﻿using TicTacToe.Win.Helpers;
 using Utils.Extensions;
 using Utils.Windows.Helpers;
 
-namespace TikTakToe.Helpers;
+namespace TicTacToe.Win.Helpers;
 public partial class SettingsViewer : Form
 {
 	public SettingsViewer()
@@ -30,7 +30,7 @@ public partial class SettingsViewer : Form
 		{
 			var newColor = colorDialog1.Color;
 			if (newColor.SameRGB(pbP2Color.BackColor))
-				Msg.Warning("Spieler 1 und Spieler 2 können nicht die gleiche Farbe haben");
+				Msg.Warning("Spieler 1 und Spieler 2 können nicht die gleiche Farbe haben", owner: this);
 			else if (newColor.SameRGB(pbP1Color.BackColor) == false)
 				pbP1Color.BackColor = colorDialog1.Color;
 		}
@@ -47,7 +47,7 @@ public partial class SettingsViewer : Form
 		{
 			var newColor = colorDialog1.Color;
 			if (newColor.SameRGB(pbP1Color.BackColor))
-				Msg.Warning("Spieler 1 und Spieler 2 können nicht die gleiche Farbe haben");
+				Msg.Warning("Spieler 1 und Spieler 2 können nicht die gleiche Farbe haben", owner: this);
 			else if (newColor.SameRGB(pbP2Color.BackColor) == false)
 				pbP2Color.BackColor = colorDialog1.Color;
 		}
@@ -72,7 +72,7 @@ public partial class SettingsViewer : Form
 	{
 		if (!IsSaved())
 		{
-			var response = Msg.Ask("Es gibt noch ungespeicherte Änderungen.\nWolle sie diese Speichern?");
+			var response = Msg.Ask("Es gibt noch ungespeicherte Änderungen.\nWolle sie diese Speichern?", owner: this);
 			if (response == DialogResult.Yes)
 				Save();
 		}

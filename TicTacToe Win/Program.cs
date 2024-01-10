@@ -1,6 +1,6 @@
-using TikTakToe;
+using TicTacToe_Win;
 
-namespace TicTacToe_WIn;
+namespace TicTacToe.Win.TicTacToe.WIn;
 public static class Program
 {
 	/// <summary>

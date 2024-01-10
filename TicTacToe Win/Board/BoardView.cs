@@ -1,14 +1,14 @@
 ﻿using TicTacToe.Lib.Board;
 using TicTacToe.Lib.Enums;
 using TicTacToe.Lib.MoveCalculators;
-using TicTacToe_WIn.Helpers;
+using TicTacToe.Win.Helpers;
 using Utils.Windows.Forms;
 using Utils.Windows.Helpers;
 using static TicTacToe.Lib.Board.BoardHandler;
 using static TicTacToe.Lib.Board.LocalBoardHandler;
 using static TicTacToe.Lib.Board.RemoteBoardHandler;
 
-namespace TikTakToe;
+namespace TicTacToe.Win.Board;
 public partial class BoardView : UserControl
 {
 	private const string NotStartedText = "Spiel noch nicht gestartet";
@@ -72,16 +72,22 @@ public partial class BoardView : UserControl
 	private void Remote_OnFoundOpponent(object? sender, EventArgs e)
 	{
 		_loadingDialog.Close();
+		var text = "Es wurde ein Gegner grfunden.\n";
+		var iStart = (_boardHandler as RemoteBoardHandler)!.MyPlayer == Player.Player1;
+
+		if (iStart)
+			text += "Sie beginnen";
+		else
+			text += "Der Genger beginnt";
+
+		var popUp = new PopUpForm(text);
+		popUp.PopUp();
 	}
 	private void Remote_OnCancelMatchmaking(object? sender, EventArgs e)
 	{
 		var remote = (_boardHandler as RemoteBoardHandler)!;
 		remote.LeaveMatchmaking();
 		_loadingDialog.Close();
-	}
-	private void Remote_OnOpponentLeft(object? snder, EventArgs e)
-	{
-		Msg.Error("Der Gegner hat das Spiel verlassen");
 	}
 	public void SetP2Computer(bool p2IsComputer, MoveCalculator? moveCalculator)
 	{
@@ -127,8 +133,8 @@ public partial class BoardView : UserControl
 	}
 	private void OnFinished(object? sender, Result result)
 	{
-		lblStatus.SafeInvoke(() => lblStatus.Text = String.Format(FinishedText, result.Winner.ToString()));
-		this.SafeInvoke(() => this.Enabled = false);
+		lblStatus.SafeInvoke(() => lblStatus.Text = string.Format(FinishedText, result.Winner.ToString()));
+		this.SafeInvoke(() => Enabled = false);
 
 		if (result is RemoteResult remoteResult)
 			HandleRemoteResult(remoteResult);
@@ -137,10 +143,10 @@ public partial class BoardView : UserControl
 
 		Finished?.Invoke(sender, result);
 	}
-	private static void HandleRemoteResult(RemoteResult result)
+	private void HandleRemoteResult(RemoteResult result)
 	{
 		if (result.OpponentLeft)
-			Msg.Error("Der Gegner hat das Spiel verlassen");
+			Msg.Error("Der Gegner hat das Spiel verlassen", "Sieg", ParentForm);
 		else if (result.Canceled)
 			return;
 		else
@@ -162,11 +168,11 @@ public partial class BoardView : UserControl
 				text = "Sie haben verloren";
 				caption = "Niederlage";
 			}
-			Msg.Warning(text, caption);
+			Msg.Warning(text, caption, ParentForm);
 		}
 
 	}
-	private static void HandleLocalResult(LocalResult result)
+	private void HandleLocalResult(LocalResult result)
 	{
 		string text;
 		string caption;
@@ -194,10 +200,13 @@ public partial class BoardView : UserControl
 			else
 			{
 				text = $"Spieler {(int)result.Winner} hat gewonnen";
-				caption = "Sieg";
+				caption = "";
 			}
 		}
-		Msg.Warning(text, caption);
+		var page = new TaskDialogPage();
+		page.Text = text;
+		page.Caption = caption;
+		TaskDialog.ShowDialog(this, page);
 	}
 
 	private Color GetPlayerColor(Player player)
@@ -257,6 +266,6 @@ public partial class BoardView : UserControl
 	private void BoardView_EnabledChanged(object sender, EventArgs e)
 	{
 		foreach (var control in GetControlHierarchy(this))
-			control.Enabled = this.Enabled;
+			control.Enabled = Enabled;
 	}
 }

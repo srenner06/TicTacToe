@@ -1,4 +1,6 @@
-﻿namespace TikTakToe;
+﻿using TicTacToe.Win.Board;
+
+namespace TicTacToe_Win;
 
 partial class MainForm
 {

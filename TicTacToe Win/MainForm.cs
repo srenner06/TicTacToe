@@ -1,9 +1,10 @@
 ﻿using TicTacToe.Lib.Board;
 using TicTacToe.Lib.Enums;
 using TicTacToe.Lib.MoveCalculators;
-using TikTakToe.Helpers;
+using TicTacToe.Win.Helpers;
+using Utils.Windows.Extensions;
 using static TicTacToe.Lib.Board.BoardHandler;
-namespace TikTakToe;
+namespace TicTacToe_Win;
 public partial class MainForm : Form
 {
 	public MainForm()
@@ -35,8 +36,8 @@ public partial class MainForm : Form
 							? Player.Player1
 							: Player.Player2;
 
-		boardView1.SetP2Computer(false, null);
 		boardView1.SetHandler(new LocalBoardHandler());
+		boardView1.SetP2Computer(false, null);
 		boardView1.Start(start);
 	}
 	private void StartComputerMatch()
@@ -50,8 +51,8 @@ public partial class MainForm : Form
 													: rbDifficultyNormal.Checked
 																		  ? new NormalMoveCalculator()
 																		  : new ImpossibleMoveCalculator();
-		boardView1.SetP2Computer(true, moveCalculator);
 		boardView1.SetHandler(new LocalBoardHandler());
+		boardView1.SetP2Computer(true, moveCalculator);
 		boardView1.Start(start);
 	}
 	private void StartOnlineMatch()
@@ -63,7 +64,7 @@ public partial class MainForm : Form
 
 	private void OnGameFinished(object? sender, Result winner)
 	{
-		tlpStartSettings.Enabled = true;
+		tlpStartSettings.SafeInvoke(() => tlpStartSettings.Enabled = true);
 	}
 
 	private void btnSettings_Click(object sender, EventArgs e)

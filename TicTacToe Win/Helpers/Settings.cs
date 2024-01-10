@@ -1,6 +1,5 @@
 ﻿using Utils.Helpers;
-
-namespace TicTacToe_WIn.Helpers;
+namespace TicTacToe.Win.Helpers;
 internal class Settings
 {
 	public Color P1Color = Color.Blue;

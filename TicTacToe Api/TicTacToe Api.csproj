@@ -5,7 +5,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <InvariantGlobalization>true</InvariantGlobalization>
-    <RootNamespace>$(MSBuildProjectName.Replace(' ', '.'))</RootNamespace>
+    <RootNamespace>$(MSBuildProjectName.Replace(" ", "."))</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>

@@ -1,4 +1,4 @@
-﻿namespace TicTacToe_WIn.Helpers;
+﻿namespace TicTacToe.Win.Helpers;
 
 internal class CacheHelper : Utils.Helpers.CacheHelper
 {

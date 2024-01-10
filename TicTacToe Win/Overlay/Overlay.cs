@@ -1,4 +1,4 @@
-﻿namespace TicTacToe_WIn.Overlay;
+﻿namespace TicTacToe.Win.Overlay;
 
 public interface IOverlay
 {

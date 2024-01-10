@@ -1,4 +1,4 @@
-﻿namespace TikTakToe.Helpers;
+﻿namespace TicTacToe.Win.Helpers;
 
 partial class SettingsViewer
 {

@@ -1,4 +1,4 @@
-﻿namespace TikTakToe;
+﻿namespace TicTacToe_Win;
 
 partial class OverlayForm
 {

@@ -1,4 +1,4 @@
-﻿namespace TicTacToe_WIn.Helpers;
+﻿namespace TicTacToe.Win.Helpers;
 
 public static class Helper
 {

@@ -1,4 +1,4 @@
-﻿namespace TikTakToe;
+﻿namespace TicTacToe.Win.Board;
 
 partial class BoardView
 {
