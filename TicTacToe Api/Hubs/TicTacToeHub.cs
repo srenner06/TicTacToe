@@ -8,27 +8,30 @@ namespace TicTacToe.Api.Hubs;
 
 public class TicTacToeHub : Hub
 {
-	private readonly MatchmakingService matchmakingService;
+	private readonly MatchmakingService _matchmakingService;
 
 	public TicTacToeHub(MatchmakingService matchmakingService)
 	{
-		this.matchmakingService = matchmakingService;
-		this.matchmakingService.MadeMatch += OnMadeMatch;
+		this._matchmakingService = matchmakingService;
+		this._matchmakingService.MadeMatch += OnMadeMatch;
 	}
 
 	public RemotePlayer JoinMatchmaking()
 	{
-		var player = matchmakingService.AddPlayer(Context.ConnectionId);
+		var player = _matchmakingService.AddPlayer(Context.ConnectionId);
 		return player;
 	}
 
 	public void LeaveMatchmaking(string playerId)
 	{
-		matchmakingService.RemovePlayer(playerId);
+		_matchmakingService.RemovePlayer(playerId);
 	}
+
+
+#pragma warning disable IDE1006
 	public async Task LeaveMatch(string playerId, string gameId)
 	{
-		var game = matchmakingService.GetGame(gameId);
+		var game = _matchmakingService.GetGame(gameId);
 		if (game is null)
 			return;
 
@@ -46,6 +49,28 @@ public class TicTacToeHub : Hub
 			_ => string.Empty
 		};
 	}
+
+	public async Task MakeMove(string playerId, string gameId, int fieldNum)
+	{
+		var game = _matchmakingService.GetGame(gameId);
+		if (game is null)
+			return;
+
+		if (playerId != game.CurrentTurnPlayerId)
+			return;
+
+		var player = playerId == game.Player1.Id ? Player.Player1 : Player.Player2;
+		var move = new Move(player, fieldNum);
+		var changed = game.Board.TryMakeMove(move);
+		if (changed)
+		{
+			game.SwitchTurn();
+			await Clients.Group(game.Id).SendAsync("UpdateGameState", game.Board.GetFields());
+			await CheckGameEnded(game);
+		}
+	}
+
+
 	private async void OnMadeMatch(object? sender, Game game)
 	{
 		await Groups.AddToGroupAsync(game.Player1.ConnectionId, game.Id);
@@ -54,25 +79,6 @@ public class TicTacToeHub : Hub
 		await Clients.Client(game.Player1.ConnectionId).SendAsync("StartGame", game.Id, Player.Player1);
 		await Clients.Client(game.Player2.ConnectionId).SendAsync("StartGame", game.Id, Player.Player2);
 	}
-
-	public async Task MakeMove(string playerId, string gameId, int fieldNum)
-	{
-		var game = matchmakingService.GetGame(gameId);
-		if (game is null)
-			return;
-
-		if (playerId != game.CurrentTurnPlayerId)
-			return;
-
-		var player = playerId == game.Player1.Id ? Player.Player1 : Player.Player2;
-		var changed = game.Board.SetByNum(fieldNum, player, false);
-		if (changed)
-		{
-			game.CurrentTurnPlayerId = GetOpponentConnectionId(game, playerId);
-			await Clients.Group(game.Id).SendAsync("UpdateGameState", game.Board.GetFields());
-			await CheckGameEnded(game);
-		}
-	}
 	private async Task CheckGameEnded(Game game)
 	{
 		var winner = game.Board.CheckWin();
@@ -80,8 +86,9 @@ public class TicTacToeHub : Hub
 		{
 			await Clients.Group(game.Id).SendAsync("GameFinished", winner);
 
-			await Groups.RemoveFromGroupAsync(game.Player1.Id, game.Id);
-			await Groups.RemoveFromGroupAsync(game.Player2.Id, game.Id);
+			await Groups.RemoveFromGroupAsync(game.Player1.ConnectionId, game.Id);
+			await Groups.RemoveFromGroupAsync(game.Player2.ConnectionId, game.Id);
 		}
 	}
+#pragma warning restore IDE1006
 }

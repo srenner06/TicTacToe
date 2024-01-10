@@ -1,10 +1,10 @@
-﻿using TicTacToe.Lib.Board;
+﻿using TicTacToe.Lib.BoardHandlers;
 using TicTacToe.Lib.Enums;
 using TicTacToe.Lib.MoveCalculators;
 using TicTacToe.Win.Helpers;
 using Utils.Windows.Extensions;
-using static TicTacToe.Lib.Board.BoardHandler;
-namespace TicTacToe_Win;
+using static TicTacToe.Lib.BoardHandlers.BoardHandler;
+namespace TicTacToe.Win;
 public partial class MainForm : Form
 {
 	public MainForm()

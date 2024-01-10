@@ -17,7 +17,7 @@ public static class Helper
 			else
 				func();
 		}
-		catch (Exception e)
+		catch //(Exception e)
 		{
 		}
 	}
@@ -30,7 +30,7 @@ public static class Helper
 			else
 				func(uiElement);
 		}
-		catch (Exception e)
+		catch //(Exception e)
 		{
 		}
 	}

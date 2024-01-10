@@ -1,6 +1,4 @@
-using TicTacToe_Win;
-
-namespace TicTacToe.Win.TicTacToe.WIn;
+namespace TicTacToe.Win;
 public static class Program
 {
 	/// <summary>

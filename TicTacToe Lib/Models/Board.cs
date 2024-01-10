@@ -2,7 +2,7 @@
 
 namespace TicTacToe.Lib.Models;
 
-public class ShallowBord
+public sealed class Board
 {
 	private readonly Player[] _fields = new Player[9];
 	public Player[] GetFields()
@@ -22,17 +22,17 @@ public class ShallowBord
 	public Player Field8 => _fields[7];
 	public Player Field9 => _fields[8];
 
-	public ShallowBord()
+	public Board()
 	{
 		Array.Fill(_fields, Player.NoOne);
 	}
 
-	public ShallowBord(ShallowBord original)
+	public Board(Board original)
 	{
 		original._fields.CopyTo(_fields, 0);
 	}
 
-	public ShallowBord(Player[] _fields)  // Change parameter name to match field name
+	public Board(Player[] _fields)  // Change parameter name to match field name
 	{
 		if (_fields.Length != 9)
 			throw new ArgumentException($"{nameof(_fields)} must have a Length of 9", nameof(_fields));
@@ -68,7 +68,7 @@ public class ShallowBord
 		return 0; // No possible win
 	}
 
-	public bool CheckPossibleWin(Player f1, Player f2, Player f3, Player player)
+	private bool CheckPossibleWin(Player f1, Player f2, Player f3, Player player)
 	{
 		var opposite = player != Player.Player1 ? Player.Player1 : Player.Player2;
 
@@ -99,10 +99,10 @@ public class ShallowBord
 		var diagonal1 = (Field1, Field5, Field9);
 		var diagonal2 = (Field3, Field5, Field7);
 
-		List<(Player, Player, Player)> possibleWins = [row1, row2, row3, col1, col2, col3, diagonal1, diagonal2];
+		(Player F1, Player F2, Player F3)[] possibleWins = [row1, row2, row3, col1, col2, col3, diagonal1, diagonal2];
 
-		var win = possibleWins.FirstOrDefault(w => w.Item1 == w.Item2 && w.Item2 == w.Item3 && w.Item1 != Player.NoOne);
-		return win != default ? win.Item1 : Player.NoOne;
+		var win = possibleWins.FirstOrDefault(w => w.F1 == w.F2 && w.F2 == w.F3 && w.F1 != Player.NoOne);
+		return win != default ? win.F1 : Player.NoOne;
 	}
 
 	public IEnumerable<int> GetFreeFields()
@@ -114,37 +114,27 @@ public class ShallowBord
 				yield return i + 1;
 		}
 	}
-	public void SetMove(Move move, bool force = false)
-		=> SetByNum(move.Field, move.Player, force);
-	public bool SetByNum(int fieldNum, Player player, bool force = false)
-	{
-		if (fieldNum is < 1 or > 9)
-			return false;
 
-		if (!force)
-		{
-			var field = _fields[fieldNum - 1];
-			if (field != Player.NoOne || player == Player.NoOne)
-				return false;
-		}
-
-		_fields[fieldNum - 1] = player;
-		return true;
-	}
 	public Player GetByNum(int i)
 	{
-		return i switch
-		{
-			1 => Field1,
-			2 => Field2,
-			3 => Field3,
-			4 => Field4,
-			5 => Field5,
-			6 => Field6,
-			7 => Field7,
-			8 => Field8,
-			9 => Field9,
-			_ => throw new IndexOutOfRangeException(nameof(i)),
-		};
+		var index = i - 1;
+		return _fields[index];
+	}
+	private void MakeMove(Move move)
+	{
+		_fields[move.Field] = move.Player;
+	}
+
+	public bool TryMakeMove(Move move)
+	{
+		if (move.IsValid == false)
+			return false;
+
+		var field = GetByNum(move.Field);
+		if (field == Player.NoOne)
+			return false;
+
+		MakeMove(move);
+		return true;
 	}
 }

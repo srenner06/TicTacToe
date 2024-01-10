@@ -4,13 +4,13 @@ namespace TicTacToe.Api.Services;
 
 public class MatchmakingService
 {
-	private static List<RemotePlayer> _players = new List<RemotePlayer>();
-	private static List<Game> games = new List<Game>();
+	private static readonly List<RemotePlayer> _players = [];
+	private static readonly List<Game> _games = [];
 	public event EventHandler<Game>? MadeMatch;
 	private static readonly object _lock = new();
 	public RemotePlayer AddPlayer(string connectionId)
 	{
-		var player = new RemotePlayer { Id = Guid.NewGuid().ToString(), ConnectionId = connectionId };
+		var player = new RemotePlayer(connectionId);
 
 		lock (_lock)
 			_players.Add(player);
@@ -30,13 +30,8 @@ public class MatchmakingService
 				var p1 = players[0];
 				var p2 = players[1];
 
-				var game = new Game() { Id = Guid.NewGuid().ToString() };
-				(game.Player1, game.Player2) = Random.Shared.Next(0, 2) == 0
-														? (p1, p2)
-														: (p2, p1);
-
-				game.CurrentTurnPlayerId = game.Player1.Id;
-				games.Add(game);
+				var game = new Game(p1, p2);
+				_games.Add(game);
 
 				MadeMatch?.Invoke(this, game);
 			}
@@ -60,17 +55,17 @@ public class MatchmakingService
 
 	public Game? GetGame(string gameId)
 	{
-		return games.FirstOrDefault(g => g.Id == gameId);
+		return _games.FirstOrDefault(g => g.Id == gameId);
 	}
 	public bool RemoveGame(string gameId)
 	{
 		var result = false;
 		lock (_lock)
 		{
-			var game = games.FirstOrDefault(g => g.Id == gameId);
+			var game = _games.FirstOrDefault(g => g.Id == gameId);
 			if (game is not null)
 			{
-				games.Remove(game);
+				_games.Remove(game);
 				result = true;
 			}
 		}

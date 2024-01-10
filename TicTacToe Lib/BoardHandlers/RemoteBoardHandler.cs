@@ -5,23 +5,23 @@ using TicTacToe.Lib.Enums;
 using TicTacToe.Lib.Models;
 using Utils.Extensions;
 
-namespace TicTacToe.Lib.Board;
+namespace TicTacToe.Lib.BoardHandlers;
 
-public class RemoteBoardHandler : BoardHandler, IDisposable
+public sealed class RemoteBoardHandler : BoardHandler, IDisposable
 {
 	public record RemoteResult(Player Winner, Player MyPlayer, bool OpponentLeft = false, bool Canceled = false) : Result(Winner);
 
 	public event EventHandler? JoinedMatchmaking;
 	public event EventHandler? FoundOpponent;
 	public Player MyPlayer { get; private set; } = Player.NoOne;
-	private readonly HubConnection hubConnection;
-	private string playerId = "";
-	private string gameId = "";
-	private bool disposedValue;
+	private readonly HubConnection _hubConnection;
+	private string _playerId = "";
+	private string _gameId = "";
+	private bool _disposedValue;
 
 	public RemoteBoardHandler(string hubUrl)
 	{
-		hubConnection = new HubConnectionBuilder()
+		_hubConnection = new HubConnectionBuilder()
 			.WithUrl(hubUrl)
 			.AddJsonProtocol(options =>
 			{
@@ -29,10 +29,10 @@ public class RemoteBoardHandler : BoardHandler, IDisposable
 			})
 			.Build();
 
-		hubConnection.On<Player[]>("UpdateGameState", OnUpdateGameState);
-		hubConnection.On<Player>("GameFinished", OnGameFinished);
-		hubConnection.On<string, Player>("StartGame", OnStartGame);
-		hubConnection.On("OpponentLeft", () =>
+		_hubConnection.On<Player[]>("UpdateGameState", OnUpdateGameState);
+		_hubConnection.On<Player>("GameFinished", OnGameFinished);
+		_hubConnection.On<string, Player>("StartGame", OnStartGame);
+		_hubConnection.On("OpponentLeft", () =>
 		{
 			RaiseFinished(new RemoteResult(Player.NoOne, MyPlayer, true, false));
 		});
@@ -42,7 +42,7 @@ public class RemoteBoardHandler : BoardHandler, IDisposable
 	private void OnStartGame(string gameId, Player myPlayer)
 	{
 		_board = new();
-		this.gameId = gameId;
+		this._gameId = gameId;
 		MyPlayer = myPlayer;
 		NextTurn = Player.Player1;
 		IsPlaying = true;
@@ -52,12 +52,12 @@ public class RemoteBoardHandler : BoardHandler, IDisposable
 	{
 		IsPlaying = false;
 		NextTurn = Player.NoOne;
-		hubConnection.StopAsync().AwaitSync();
+		_hubConnection.StopAsync().AwaitSync();
 		RaiseFinished(new RemoteResult(winner, MyPlayer));
 	}
 	private void OnUpdateGameState(Player[] state)
 	{
-		_board = new ShallowBord(state);
+		_board = new Board(state);
 		NextTurn = _board.GetFreeFields().Count() % 2 == 1 ? Player.Player1 : Player.Player2;
 		RaiseUpdatedBoard();
 	}
@@ -65,13 +65,13 @@ public class RemoteBoardHandler : BoardHandler, IDisposable
 	public override void Start(Player startPlayer)
 	{
 		IsPlaying = false;
-		hubConnection.StartAsync().AwaitSync();
+		_hubConnection.StartAsync().AwaitSync();
 		JoinedMatchmaking?.Invoke(this, EventArgs.Empty);
-		playerId = hubConnection.InvokeAsync<RemotePlayer>("JoinMatchmaking").AwaitSync().Id;
+		_playerId = _hubConnection.InvokeAsync<RemotePlayer>("JoinMatchmaking").AwaitSync().Id;
 	}
 	public void LeaveMatchmaking()
 	{
-		hubConnection.InvokeAsync("LeaveMatchmaking", playerId).AwaitSync();
+		_hubConnection.InvokeAsync("LeaveMatchmaking", _playerId).AwaitSync();
 		RaiseFinished(new RemoteResult(Player.NoOne, MyPlayer, false, true));
 	}
 
@@ -80,52 +80,52 @@ public class RemoteBoardHandler : BoardHandler, IDisposable
 		move = new Move(MyPlayer, move.Field);
 		if (ValidMove(move))
 		{
-			hubConnection.InvokeAsync("MakeMove", playerId, gameId, move.Field).AwaitSync();
+			_hubConnection.InvokeAsync("MakeMove", _playerId, _gameId, move.Field).AwaitSync();
 			return true;
 		}
 
 		return false;
 	}
 
-	protected virtual void Dispose(bool disposing)
+	private async void DisposeAsync(bool disposing)
 	{
-		if (!disposedValue)
+		if (!_disposedValue)
 		{
 			if (disposing)
 			{
 				try
 				{
-					if (hubConnection.State == HubConnectionState.Connected)
+					if (_hubConnection.State == HubConnectionState.Connected)
 					{
 						if (IsPlaying)
-							hubConnection.InvokeAsync("LeaveMatch", playerId, gameId).AwaitSync();
+							await _hubConnection.InvokeAsync("LeaveMatch", _playerId, _gameId);
 						else
-							hubConnection.InvokeAsync("LeaveMatchmaking", playerId).AwaitSync();
+							await _hubConnection.InvokeAsync("LeaveMatchmaking", _playerId);
 					}
 				}
 				catch { }
 				finally
 				{
-					hubConnection.DisposeAsync();
+					await _hubConnection.DisposeAsync();
 				}
 			}
 
 			// TODO: Nicht verwaltete Ressourcen (nicht verwaltete Objekte) freigeben und Finalizer überschreiben
 			// TODO: Große Felder auf NULL setzen
-			disposedValue = true;
+			_disposedValue = true;
 		}
 	}
 
 	~RemoteBoardHandler()
 	{
-		// Ändern Sie diesen Code nicht. Fügen Sie Bereinigungscode in der Methode "Dispose(bool disposing)" ein.
-		Dispose(disposing: false);
+		// Ändern Sie diesen Code nicht. Fügen Sie Bereinigungscode in der Methode "DisposeAsync(bool disposing)" ein.
+		DisposeAsync(disposing: false);
 	}
 
 	public void Dispose()
 	{
-		// Ändern Sie diesen Code nicht. Fügen Sie Bereinigungscode in der Methode "Dispose(bool disposing)" ein.
-		Dispose(disposing: true);
+		// Ändern Sie diesen Code nicht. Fügen Sie Bereinigungscode in der Methode "DisposeAsync(bool disposing)" ein.
+		DisposeAsync(disposing: true);
 		GC.SuppressFinalize(this);
 	}
 

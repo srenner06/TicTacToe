@@ -1,11 +1,11 @@
-﻿using TicTacToe.Lib.Enums;
+using TicTacToe.Lib.Enums;
 using TicTacToe.Lib.Models;
 
 namespace TicTacToe.Lib.MoveCalculators;
 
-public class ImpossibleMoveCalculator : MoveCalculator
+public sealed class ImpossibleMoveCalculator : MoveCalculator
 {
-	public override Move CalculateBestMove(ShallowBord board, Player player)
+	public override Move CalculateBestMove(Board board, Player player)
 	{
 		var freeFields = board.GetFreeFields();
 		if (freeFields.Any() == false)
@@ -31,27 +31,28 @@ public class ImpossibleMoveCalculator : MoveCalculator
 
 	private record MoveScore(int Field, int Score);
 
-	private MoveScore FindBestMove(ShallowBord board, Player player, int count = 0)
+	private MoveScore FindBestMove(Board board, Player player, int count = 0)
 	{
 		var bestMoveScore = new MoveScore(0, player == Player.Player2 ? int.MinValue : int.MaxValue);
 
-		foreach (var move in board.GetFreeFields())
+		foreach (var field in board.GetFreeFields())
 		{
-			board.SetByNum(move, player);
-			var score = GetScore(board, player, count);
-			board.SetByNum(move, Player.NoOne, true);
+			var copy = new Board(board);
+			var move = new Move(player, field);
+			copy.TryMakeMove(move);
+			var score = GetScore(copy, player, count);
 
-			if (player == Player.Player2 && score > bestMoveScore.Score ||
-				player == Player.Player1 && score < bestMoveScore.Score)
+			if ((player == Player.Player2 && score > bestMoveScore.Score) ||
+				(player == Player.Player1 && score < bestMoveScore.Score))
 			{
-				bestMoveScore = new MoveScore(move, score);
+				bestMoveScore = new MoveScore(field, score);
 			}
 		}
 
 		return bestMoveScore;
 	}
 
-	private int GetScore(ShallowBord board, Player player, int count)
+	private int GetScore(Board board, Player player, int count)
 	{
 		var winner = board.CheckWin();
 

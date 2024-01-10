@@ -9,17 +9,17 @@ namespace CustomMessageBox.Private
 	{
 		#region Properties & Fields
 		//Fields
-		private Color primaryColor = Color.CornflowerBlue;
-		private int borderSize = 2;
+		private Color _primaryColor = Color.CornflowerBlue;
+		private int _borderSize = 2;
 
 		//Properties
 		public Color PrimaryColor
 		{
-			get { return primaryColor; }
+			get { return _primaryColor; }
 			set
 			{
-				primaryColor = value;
-				this.BackColor = primaryColor;//Form Border Color
+				_primaryColor = value;
+				this.BackColor = _primaryColor;//Form Border Color
 				this.panelTitleBar.BackColor = PrimaryColor;//Title Bar Back Color
 			}
 		}
@@ -42,7 +42,7 @@ namespace CustomMessageBox.Private
 		{
 			InitializeComponent();
 			InitializeItems();
-			this.PrimaryColor = primaryColor;
+			this.PrimaryColor = _primaryColor;
 			this.labelMessage.Text = text;
 			this.labelCaption.Text = caption;
 			SetFormSize();
@@ -56,7 +56,7 @@ namespace CustomMessageBox.Private
 		private void InitializeItems()
 		{
 			this.FormBorderStyle = FormBorderStyle.None;
-			this.Padding = new Padding(borderSize);//Set border size
+			this.Padding = new Padding(_borderSize);//Set border size
 			this.labelMessage.MaximumSize = new Size(550, 0);
 			this.btnClose.DialogResult = DialogResult.Cancel;
 			this.button1.DialogResult = DialogResult.OK;

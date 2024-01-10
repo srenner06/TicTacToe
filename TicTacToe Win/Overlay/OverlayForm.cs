@@ -1,7 +1,7 @@
 ﻿using TicTacToe.Win.Helpers;
 using TicTacToe.Win.Overlay;
 
-namespace TicTacToe_Win;
+namespace TicTacToe.Win;
 public partial class OverlayForm : Form, IOverlay
 {
 	private readonly object _lock = new object(); // Used for synchronization

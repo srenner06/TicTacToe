@@ -1,13 +1,13 @@
 ﻿using TicTacToe.Lib.Enums;
 using TicTacToe.Lib.Models;
 
-namespace TicTacToe.Lib.Board;
+namespace TicTacToe.Lib.BoardHandlers;
 
 public abstract class BoardHandler
 {
-	protected ShallowBord _board = new();
-	public virtual ShallowBord GetBoard()
-		=> new ShallowBord(_board);
+	protected Board _board = new();
+	public virtual Board GetBoard()
+		=> new Board(_board);
 
 
 	public Player NextTurn { get; protected set; }
@@ -24,13 +24,12 @@ public abstract class BoardHandler
 		IsPlaying = true;
 	}
 
-	public abstract bool MakeMove(Move moove);
+	public abstract bool MakeMove(Move move);
 	protected virtual bool ValidMove(Move move)
 	{
 		return IsPlaying &&
-			   move.Player != Player.NoOne &&
+			   move.IsValid &&
 			   move.Player == NextTurn &&
-			   move.Field is >= 1 and <= 9 &&
 			   _board.GetByNum(move.Field) == Player.NoOne;
 	}
 

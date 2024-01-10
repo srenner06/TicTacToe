@@ -1,5 +1,4 @@
-﻿using TicTacToe.Win.Helpers;
-using Utils.Extensions;
+﻿using Utils.Extensions;
 using Utils.Windows.Helpers;
 
 namespace TicTacToe.Win.Helpers;

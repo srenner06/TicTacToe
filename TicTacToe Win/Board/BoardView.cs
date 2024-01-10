@@ -1,12 +1,12 @@
-﻿using TicTacToe.Lib.Board;
+﻿using TicTacToe.Lib.BoardHandlers;
 using TicTacToe.Lib.Enums;
 using TicTacToe.Lib.MoveCalculators;
 using TicTacToe.Win.Helpers;
 using Utils.Windows.Forms;
 using Utils.Windows.Helpers;
-using static TicTacToe.Lib.Board.BoardHandler;
-using static TicTacToe.Lib.Board.LocalBoardHandler;
-using static TicTacToe.Lib.Board.RemoteBoardHandler;
+using static TicTacToe.Lib.BoardHandlers.BoardHandler;
+using static TicTacToe.Lib.BoardHandlers.LocalBoardHandler;
+using static TicTacToe.Lib.BoardHandlers.RemoteBoardHandler;
 
 namespace TicTacToe.Win.Board;
 public partial class BoardView : UserControl
@@ -27,7 +27,7 @@ public partial class BoardView : UserControl
 		InitializeComponent();
 		lblStatus.Text = NotStartedText;
 
-		foreach (var pb in GetControlHierarchy(this).OfType<PictureBox>())
+		foreach (var pb in this.GetControlHierarchy(this).OfType<PictureBox>())
 			pb.Click += OnClick;
 	}
 	private IEnumerable<Control> GetControlHierarchy(Control root)
@@ -120,7 +120,7 @@ public partial class BoardView : UserControl
 
 	private void SyncViewToBoard()
 	{
-		var board = _boardHandler?.GetBoard() ?? new ShallowBord();
+		var board = _boardHandler?.GetBoard() ?? new Lib.Models.Board();
 		pb1.BackColor = GetPlayerColor(board.Field1);
 		pb2.BackColor = GetPlayerColor(board.Field2);
 		pb3.BackColor = GetPlayerColor(board.Field3);

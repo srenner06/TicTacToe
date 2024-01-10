@@ -1,7 +1,18 @@
-﻿namespace TicTacToe.Lib.Models;
+﻿using Utils.Extensions;
 
-public class RemotePlayer
+namespace TicTacToe.Lib.Models;
+
+public sealed class RemotePlayer
 {
-	public string Id { get; set; }
-	public string ConnectionId { get; set; }
+	public readonly string Id;
+	public readonly string ConnectionId;
+
+	public RemotePlayer(string connectionId)
+	{
+		if (connectionId.IsEmpty())
+			throw new ArgumentException("ConnectionId cannot be empty", nameof(connectionId));
+
+		Id = Guid.NewGuid().ToString();
+		ConnectionId = connectionId;
+	}
 }

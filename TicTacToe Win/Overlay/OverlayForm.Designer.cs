@@ -1,4 +1,4 @@
-﻿namespace TicTacToe_Win;
+﻿namespace TicTacToe.Win;
 
 partial class OverlayForm
 {

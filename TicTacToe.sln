@@ -10,13 +10,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Utils", "Utils\Utils\Utils.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Utils.Windows", "Utils\Utils.Windows\Utils.Windows.csproj", "{5888D8E6-7250-4BD7-92B1-D0908DBD8173}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{E1386972-397B-4ED2-AB80-91787B3966F7}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TicTacToe Api", "TicTacToe Api\TicTacToe Api.csproj", "{5DA64C13-734A-440C-99C1-77831BD323C3}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TicTacToe Lib", "TicTacToe Lib\TicTacToe Lib.csproj", "{F9FF99BF-6F03-4515-B38C-DEFF223ED560}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Projektmappenelemente", "Projektmappenelemente", "{FAFDDC35-8020-4A6B-8AEE-5F3D8F78785D}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Projektmappenelemente", "Projektmappenelemente", "{64C3A3A3-B9E9-41B2-8E0E-9B6FF9BF66BC}"
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
 	EndProjectSection

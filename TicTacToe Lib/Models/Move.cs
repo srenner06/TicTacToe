@@ -2,4 +2,16 @@
 
 namespace TicTacToe.Lib.Models;
 
-public record Move(Player Player, int Field);
+public sealed record Move
+{
+	public readonly bool IsValid;
+	public readonly int Field;
+	public readonly Player Player;
+	public Move(Player player, int field)
+	{
+		this.Player = player;
+		this.Field = field;
+
+		IsValid = Player != Player.NoOne && (Field is >= 1 and <= 9);
+	}
+}

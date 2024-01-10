@@ -1,6 +1,6 @@
 ﻿using TicTacToe.Win.Board;
 
-namespace TicTacToe_Win;
+namespace TicTacToe.Win;
 
 partial class MainForm
 {

@@ -2,9 +2,9 @@
 using TicTacToe.Lib.Models;
 using TicTacToe.Lib.MoveCalculators;
 
-namespace TicTacToe.Lib.Board;
+namespace TicTacToe.Lib.BoardHandlers;
 
-public class LocalBoardHandler : BoardHandler
+public sealed class LocalBoardHandler : BoardHandler
 {
 	public record LocalResult(Player Winner, bool P2WasComputer) : Result(Winner);
 	public bool P2IsComputer { get; private set; } = false;
@@ -37,7 +37,9 @@ public class LocalBoardHandler : BoardHandler
 		if (!ValidMove(move))
 			return false;
 
-		_board.SetMove(move);
+		var valid = _board.TryMakeMove(move);
+		if (!valid)
+			return false;
 
 		var winner = _board.CheckWin();
 		if (winner != Player.NoOne || !_board.GetFreeFields().Any())
