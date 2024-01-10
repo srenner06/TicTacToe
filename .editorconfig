@@ -57,6 +57,7 @@ csharp_style_expression_bodied_properties = true:silent
 csharp_style_expression_bodied_indexers = true:silent
 csharp_style_expression_bodied_accessors = true:silent
 csharp_style_expression_bodied_lambdas = true:silent
+csharp_style_expression_bodied_local_functions = true:silent
 
 [*.vb]
 #### Benennungsstile ####
@@ -105,3 +106,8 @@ dotnet_naming_style.pascal_schreibweise.required_prefix =
 dotnet_naming_style.pascal_schreibweise.required_suffix = 
 dotnet_naming_style.pascal_schreibweise.word_separator = 
 dotnet_naming_style.pascal_schreibweise.capitalization = pascal_case
+
+[*.{cs,vb}]
+dotnet_style_coalesce_expression = true:suggestion
+dotnet_style_null_propagation = true:suggestion
+dotnet_style_prefer_is_null_check_over_reference_equality_method = true:suggestion
