@@ -122,7 +122,8 @@ public sealed class Board
 	}
 	private void MakeMove(Move move)
 	{
-		_fields[move.Field] = move.Player;
+		var index = move.Field - 1;
+		_fields[index] = move.Player;
 	}
 
 	public bool TryMakeMove(Move move)
@@ -131,7 +132,7 @@ public sealed class Board
 			return false;
 
 		var field = GetByNum(move.Field);
-		if (field == Player.NoOne)
+		if (field != Player.NoOne)
 			return false;
 
 		MakeMove(move);

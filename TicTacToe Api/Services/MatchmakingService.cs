@@ -30,6 +30,9 @@ public class MatchmakingService
 				var p1 = players[0];
 				var p2 = players[1];
 
+				if (Random.Shared.Next(0, 2) == 1)
+					(p1, p2) = (p2, p1);
+
 				var game = new Game(p1, p2);
 				_games.Add(game);
 

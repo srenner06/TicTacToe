@@ -25,6 +25,8 @@ public sealed class RemoteBoardHandler : BoardHandler, IDisposable
 			.WithUrl(hubUrl)
 			.AddJsonProtocol(options =>
 			{
+				options.PayloadSerializerOptions.IgnoreReadOnlyFields = false;
+				options.PayloadSerializerOptions.IncludeFields = true;
 				options.PayloadSerializerOptions.Converters.Add(new JsonStringEnumConverter());
 			})
 			.Build();

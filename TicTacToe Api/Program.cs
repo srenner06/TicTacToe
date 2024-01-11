@@ -19,6 +19,8 @@ public class Program
 		builder.Services.AddSignalR()
 		.AddJsonProtocol(options =>
 		{
+			options.PayloadSerializerOptions.IgnoreReadOnlyFields = false;
+			options.PayloadSerializerOptions.IncludeFields = true;
 			options.PayloadSerializerOptions.Converters.Add(new JsonStringEnumConverter());
 		});
 		builder.Services.AddScoped<MatchmakingService>();

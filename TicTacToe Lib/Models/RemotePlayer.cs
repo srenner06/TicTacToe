@@ -1,4 +1,5 @@
-﻿using Utils.Extensions;
+﻿using System.Text.Json.Serialization;
+using Utils.Extensions;
 
 namespace TicTacToe.Lib.Models;
 
@@ -7,12 +8,16 @@ public sealed class RemotePlayer
 	public readonly string Id;
 	public readonly string ConnectionId;
 
-	public RemotePlayer(string connectionId)
+	[JsonConstructor]
+	public RemotePlayer(string connectionId, string id = "")
 	{
 		if (connectionId.IsEmpty())
 			throw new ArgumentException("ConnectionId cannot be empty", nameof(connectionId));
 
-		Id = Guid.NewGuid().ToString();
+		if (id.IsEmpty())
+			id = Guid.NewGuid().ToString();
+
+		Id = id;
 		ConnectionId = connectionId;
 	}
 }

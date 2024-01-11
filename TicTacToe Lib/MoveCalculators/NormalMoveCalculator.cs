@@ -17,7 +17,7 @@ public sealed class NormalMoveCalculator : MoveCalculator
 		if (fieldToVictory != 0)
 			return new Move(player, fieldToVictory);
 
-		var fieldToDefeat = board.GetPossibleWin(player == Player.Player1 ? Player.Player1 : Player.Player2);
+		var fieldToDefeat = board.GetPossibleWin(player == Player.Player1 ? Player.Player2 : Player.Player1);
 		if (fieldToDefeat != 0)
 			return new Move(player, fieldToDefeat);
 
