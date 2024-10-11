@@ -85,8 +85,16 @@ public sealed class Board
 
 		return count >= 2;
 	}
+	public bool CheckIsFinished(out Player winner)
+	{
+		winner = GetWinner();
+		if (winner != Player.NoOne)
+			return true;
 
-	public Player CheckWin()
+		return GetFreeFields().Any() == false;
+	}
+
+	public Player GetWinner()
 	{
 		var row1 = (Field1, Field2, Field3);
 		var row2 = (Field4, Field5, Field6);

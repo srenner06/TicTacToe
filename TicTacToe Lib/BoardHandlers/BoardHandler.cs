@@ -16,7 +16,7 @@ public abstract class BoardHandler
 	public virtual void Start(Player startplayer)
 	{
 		IsPlaying = false;
-		if (startplayer is Player.NoOne or default(Player))
+		if (startplayer is Player.NoOne || Enum.IsDefined<Player>(startplayer) == false)
 			return;
 
 		_board = new();
@@ -42,5 +42,4 @@ public abstract class BoardHandler
 	public event EventHandler<Result>? Finished;
 
 	public abstract record Result(Player Winner);
-
 }

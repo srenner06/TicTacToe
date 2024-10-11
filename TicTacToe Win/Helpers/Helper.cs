@@ -1,4 +1,6 @@
-﻿namespace TicTacToe.Win.Helpers;
+﻿using Utils.Windows.Extensions;
+
+namespace TicTacToe.Win.Helpers;
 
 public static class Helper
 {
@@ -8,33 +10,6 @@ public static class Helper
 		ctrl.Refresh();
 		ctrl.Update();
 	}
-	public static void SafeInvoke<T>(this T uiElement, Action func) where T : Control
-	{
-		try
-		{
-			if (uiElement.InvokeRequired)
-				uiElement.Invoke(func);
-			else
-				func();
-		}
-		catch //(Exception e)
-		{
-		}
-	}
-	public static void SafeInvokeAsync<T>(this T uiElement, Action<T> func, AsyncCallback callBack) where T : Control
-	{
-		try
-		{
-			if (uiElement.InvokeRequired)
-				func.BeginInvoke(uiElement, callBack, null);
-			else
-				func(uiElement);
-		}
-		catch //(Exception e)
-		{
-		}
-	}
-
 	public static void ToFront(Control ctrl)
 	{
 		ctrl.SafeInvoke(ctrl.BringToFront);

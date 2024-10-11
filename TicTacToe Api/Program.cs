@@ -23,7 +23,7 @@ public class Program
 			options.PayloadSerializerOptions.IncludeFields = true;
 			options.PayloadSerializerOptions.Converters.Add(new JsonStringEnumConverter());
 		});
-		builder.Services.AddScoped<MatchmakingService>();
+		builder.Services.AddSingleton<MatchmakingService>();
 
 		var app = builder.Build();
 
@@ -37,7 +37,6 @@ public class Program
 		app.UseHttpsRedirection();
 
 		app.UseAuthorization();
-
 
 		app.MapHub<TicTacToeHub>("/tictactoehub");
 		app.MapControllers();

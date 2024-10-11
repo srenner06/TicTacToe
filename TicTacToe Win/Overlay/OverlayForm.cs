@@ -1,5 +1,6 @@
 ﻿using TicTacToe.Win.Helpers;
 using TicTacToe.Win.Overlay;
+using Utils.Windows.Extensions;
 
 namespace TicTacToe.Win;
 public partial class OverlayForm : Form, IOverlay
@@ -35,7 +36,8 @@ public partial class OverlayForm : Form, IOverlay
 		lock (_lock)
 		{
 			_cts.Cancel();
-			_cts.TryReset();
+			if (_cts.TryReset() == false)
+				_cts = new();
 			Task.Run(ShowDialog, _cts.Token);
 			//startThread = new Thread(() => this.ShowDialog());
 			//startThread.Start();

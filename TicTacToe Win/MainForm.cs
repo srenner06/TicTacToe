@@ -27,7 +27,7 @@ public partial class MainForm : Form
 		else if (rbEnemyOnline.Checked)
 			StartOnlineMatch();
 
-		tlpStartSettings.Enabled = false;
+		SetControlsEnabled(false);
 	}
 
 	private void StartLocalMatch()
@@ -57,14 +57,20 @@ public partial class MainForm : Form
 	}
 	private void StartOnlineMatch()
 	{
-		boardView1.SetHandler(new RemoteBoardHandler("https://localhost:7135/tictactoehub"));
+		//boardView1.SetHandler(new RemoteBoardHandler("https://localhost:7135/tictactoehub"));
+		boardView1.SetHandler(new RemoteBoardHandler("http://localhost:5048/tictactoehub"));
 		boardView1.Start(Player.Player1);
 	}
-
+	private void SetControlsEnabled(bool enable)
+	{
+		tlpSettings.SafeInvoke(() => tlpSettings.Enabled = enable);
+		btnSettings.SafeInvoke(() => btnSettings.Enabled = enable);
+		btnStart.SafeInvoke(() => btnStart.Enabled = enable);
+	}
 
 	private void OnGameFinished(object? sender, Result winner)
 	{
-		tlpStartSettings.SafeInvoke(() => tlpStartSettings.Enabled = true);
+		SetControlsEnabled(true);
 	}
 
 	private void btnSettings_Click(object sender, EventArgs e)

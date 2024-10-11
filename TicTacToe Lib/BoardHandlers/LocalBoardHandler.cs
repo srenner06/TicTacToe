@@ -7,6 +7,7 @@ namespace TicTacToe.Lib.BoardHandlers;
 public sealed class LocalBoardHandler : BoardHandler
 {
 	public record LocalResult(Player Winner, bool P2WasComputer) : Result(Winner);
+
 	public bool P2IsComputer { get; private set; } = false;
 	private MoveCalculator? _moveCalculator;
 
@@ -41,8 +42,7 @@ public sealed class LocalBoardHandler : BoardHandler
 		if (!valid)
 			return false;
 
-		var winner = _board.CheckWin();
-		if (winner != Player.NoOne || !_board.GetFreeFields().Any())
+		if (_board.CheckIsFinished(out var winner))
 		{
 			IsPlaying = false;
 			NextTurn = Player.NoOne;

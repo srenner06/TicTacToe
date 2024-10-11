@@ -2,6 +2,8 @@
 using TicTacToe.Lib.Enums;
 using TicTacToe.Lib.MoveCalculators;
 using TicTacToe.Win.Helpers;
+using Utils.Extensions;
+using Utils.Windows.Extensions;
 using Utils.Windows.Forms;
 using Utils.Windows.Helpers;
 using static TicTacToe.Lib.BoardHandlers.BoardHandler;
@@ -11,13 +13,27 @@ using static TicTacToe.Lib.BoardHandlers.RemoteBoardHandler;
 namespace TicTacToe.Win.Board;
 public partial class BoardView : UserControl
 {
-	private const string NotStartedText = "Spiel noch nicht gestartet";
-	private const string StartedText = "Spiel läuft";
-	private const string FinishedText = "Spiel beendet. Sieger: {0}";
+	enum State
+	{
+		Default = 0,
+		Started = 1,
+		Finished = 2,
+		SearchingOpponent = 3,
+	}
 
 	public event EventHandler<Result>? Finished;
 
 	private BoardHandler? _boardHandler;
+	private State _state;
+	private State CurrentState
+	{
+		get => _state;
+		set
+		{
+			_state = value;
+			UpdateText();
+		}
+	}
 
 	public Color P1Color { get; private set; } = Color.Blue;
 	public Color P2Color { get; private set; } = Color.Red;
@@ -25,10 +41,72 @@ public partial class BoardView : UserControl
 	public BoardView()
 	{
 		InitializeComponent();
-		lblStatus.Text = NotStartedText;
+		CurrentState = State.Default;
 
-		foreach (var pb in this.GetControlHierarchy(this).OfType<PictureBox>())
+		foreach (var pb in GetControlHierarchy(this).OfType<PictureBox>())
 			pb.Click += OnClick;
+	}
+	private string GetStartedText()
+	{
+		return "";
+	}
+	private void UpdateText()
+	{
+		var text = "";
+		switch (CurrentState)
+		{
+			case State.Default:
+				text = "Spiel noch nicht gestartet";
+				break;
+			case State.Finished:
+				var winner = _boardHandler?.GetBoard().GetWinner() ?? Player.NoOne;
+				if (winner == Player.NoOne)
+					text = "Unentschieden";
+				else
+				{
+					if (_boardHandler is RemoteBoardHandler remote)
+					{
+						if (remote.MyPlayer == winner)
+							text = "Sie haben gewonnen";
+						else
+							text = "Der Gegner hat gewonnen";
+					}
+					else if (_boardHandler is LocalBoardHandler local)
+					{
+						if (local.P2IsComputer == false)
+							text = $"Spieler {(int)local.NextTurn} hat gewonnen";
+						else if (winner == Player.Player1)
+							text = "Sie haben gewonnen";
+						else if (winner == Player.Player2)
+							text = "Der Computer hat gewonnen";
+					}
+				}
+				break;
+			case State.Started:
+				if (_boardHandler is RemoteBoardHandler r)
+				{
+					if (r.MyPlayer == r.NextTurn)
+						text = "Sie sind am Zug";
+					else
+						text = "Der Gegner ist am Zug";
+				}
+				else if (_boardHandler is LocalBoardHandler local)
+				{
+					if (local.P2IsComputer == false)
+						text = $"Spieler {(int)local.NextTurn} ist am Zug";
+					else if (local.NextTurn == Player.Player1)
+						text = "Sie sind am Zug";
+					else if (local.NextTurn == Player.Player2)
+						text = "Der Computer ist am Zug";
+				}
+				break;
+			case State.SearchingOpponent:
+				text = "Gegner wird gesucht ...";
+				break;
+			default:
+				throw new NotImplementedException();
+		}
+		lblStatus.SafeInvoke(() => lblStatus.Text = text);
 	}
 	private IEnumerable<Control> GetControlHierarchy(Control root)
 	{
@@ -51,28 +129,48 @@ public partial class BoardView : UserControl
 
 	public void SetHandler(BoardHandler handler)
 	{
+		if (_boardHandler is { })
+		{
+			_boardHandler.UpdatedBoard -= OnUpdateBoard;
+			_boardHandler.Finished -= OnFinished;
+			if (_boardHandler is RemoteBoardHandler r)
+			{
+				r.FoundOpponent -= Remote_OnFoundOpponent;
+				r.JoinedMatchmaking -= Remote_OnJoinedMatchmaking;
+			}
+		}
+
 		_boardHandler = handler;
-		handler.UpdatedBoard += (sender, e) => SyncViewToBoard();
+		handler.UpdatedBoard += OnUpdateBoard;
 		handler.Finished += OnFinished;
 		if (handler is RemoteBoardHandler remote)
 		{
 			remote.FoundOpponent += Remote_OnFoundOpponent;
 			remote.JoinedMatchmaking += Remote_OnJoinedMatchmaking;
 		}
+
+		void OnUpdateBoard(object? sender, EventArgs e)
+		{
+			SyncViewToBoard();
+			UpdateText();
+		}
 	}
 	private LoadingDialog _loadingDialog = new();
 	private void Remote_OnJoinedMatchmaking(object? sender, EventArgs e)
 	{
+		CurrentState = State.SearchingOpponent;
 		_loadingDialog = new();
-		_loadingDialog.Canceled += Remote_OnCancelMatchmaking;
+		_loadingDialog.Canceled += Remote_OnCancelMatchmakingAsync;
 		_loadingDialog.SetText("Gegner wird gesucht ...");
 		_loadingDialog.StartPosition = FormStartPosition.CenterParent;
-		_loadingDialog.Show(this);
+		_loadingDialog.ShowDialogOnNewThread(this.FindForm());
 	}
 	private void Remote_OnFoundOpponent(object? sender, EventArgs e)
 	{
+		CurrentState = State.Started;
+
 		_loadingDialog.Close();
-		var text = "Es wurde ein Gegner grfunden.\n";
+		var text = "Es wurde ein Gegner gefunden.\n";
 		var iStart = (_boardHandler as RemoteBoardHandler)!.MyPlayer == Player.Player1;
 
 		if (iStart)
@@ -81,13 +179,14 @@ public partial class BoardView : UserControl
 			text += "Der Genger beginnt";
 
 		var popUp = new PopUpForm(text);
-		popUp.PopUp();
+		popUp.PopUp(owner: FindForm());
 	}
-	private void Remote_OnCancelMatchmaking(object? sender, EventArgs e)
+	private async void Remote_OnCancelMatchmakingAsync(object? sender, EventArgs e)
 	{
 		var remote = (_boardHandler as RemoteBoardHandler)!;
-		remote.LeaveMatchmaking();
+		await remote.LeaveMatchmakingAsync();
 		_loadingDialog.Close();
+		CurrentState = State.Default;
 	}
 	public void SetP2Computer(bool p2IsComputer, MoveCalculator? moveCalculator)
 	{
@@ -111,10 +210,11 @@ public partial class BoardView : UserControl
 			return;
 
 		Enabled = true;
-		lblStatus.Text = StartedText;
 		LoadSettings();
 
 		_boardHandler.Start(firstTurn);
+		if (CurrentState != State.SearchingOpponent)
+			CurrentState = State.Started;
 		SyncViewToBoard();
 	}
 
@@ -133,21 +233,26 @@ public partial class BoardView : UserControl
 	}
 	private void OnFinished(object? sender, Result result)
 	{
-		lblStatus.SafeInvoke(() => lblStatus.Text = string.Format(FinishedText, result.Winner.ToString()));
-		this.SafeInvoke(() => Enabled = false);
-
+		var newState = State.Finished;
 		if (result is RemoteResult remoteResult)
+		{
 			HandleRemoteResult(remoteResult);
+			if (remoteResult.Canceled)
+				newState = State.Default;
+		}
 		else if (result is LocalResult localResult)
 			HandleLocalResult(localResult);
 
+		
+		CurrentState = newState;
+		this.SafeInvoke(() => Enabled = false);
 		Finished?.Invoke(sender, result);
 	}
 	private void HandleRemoteResult(RemoteResult result)
 	{
 		if (result.OpponentLeft)
 			Msg.Error("Der Gegner hat das Spiel verlassen", "Sieg", ParentForm);
-		else if (result.Canceled)
+		else if (result.Canceled) //dont show a message if you yourself canceled the game
 			return;
 		else
 		{
@@ -168,7 +273,7 @@ public partial class BoardView : UserControl
 				text = "Sie haben verloren";
 				caption = "Niederlage";
 			}
-			Msg.Warning(text, caption, ParentForm);
+			Msg.Info(text, caption, FindForm());
 		}
 
 	}
@@ -203,10 +308,7 @@ public partial class BoardView : UserControl
 				caption = "";
 			}
 		}
-		var page = new TaskDialogPage();
-		page.Text = text;
-		page.Caption = caption;
-		TaskDialog.ShowDialog(this, page);
+		Msg.Info(text, caption, FindForm());
 	}
 
 	private Color GetPlayerColor(Player player)

@@ -54,14 +54,15 @@ public sealed class ImpossibleMoveCalculator : MoveCalculator
 
 	private int GetScore(Board board, Player player, int count)
 	{
-		var winner = board.CheckWin();
+		var winner = board.GetWinner();
 
-		return winner != Player.NoOne
-			? winner == Player.Player2 ? ComputerWin : PlayerWin
-			: board.GetFreeFields().Any() == false
-			? Draw
-			: player == Player.Player2
-			? FindBestMove(board, Player.Player1, count + 1).Score
-			: FindBestMove(board, Player.Player2, count + 1).Score;
+		return winner switch
+		{
+			Player.Player1 => PlayerWin,
+			Player.Player2 => ComputerWin,
+			_ when board.GetFreeFields().Any() == false => Draw,
+			_ when player == Player.Player1 => FindBestMove(board, Player.Player2, count + 1).Score,
+			_ => FindBestMove(board, Player.Player1, count + 1).Score
+		};
 	}
 }

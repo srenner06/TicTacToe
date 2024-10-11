@@ -1,10 +1,11 @@
 ﻿using Utils.Helpers;
 namespace TicTacToe.Win.Helpers;
-internal class Settings
+internal record Settings
 {
-	public Color P1Color = Color.Blue;
-	public Color P2Color = Color.Red;
-	public Color NoPColor = Color.WhiteSmoke;
+	public Color P1Color { get; set; } = Color.Blue;
+	public Color P2Color { get; set; } = Color.Red;
+	public Color NoPColor { get; set; } = Color.WhiteSmoke;
+	public int[] CustomColorsDefined { get; set; } = [];
 
 	public static Settings Load()
 	{
@@ -12,8 +13,9 @@ internal class Settings
 
 		if (settings is null)
 		{
-			new Settings().Save();
-			return Load();
+			var val = new Settings();
+			val.Save();
+			return val;
 		}
 		return settings;
 	}

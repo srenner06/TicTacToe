@@ -17,11 +17,11 @@ public partial class SettingsViewer : Form
 
 		pbP1Color.BackColor = settings.P1Color;
 		pbP2Color.BackColor = settings.P2Color;
+		colorDialog1.CustomColors = settings.CustomColorsDefined;
 	}
 
 	private void btnP1ChangeColor_Click(object sender, EventArgs e)
 	{
-		colorDialog1.Reset();
 		colorDialog1.Color = pbP1Color.BackColor;
 		colorDialog1.AnyColor = true;
 		var result = colorDialog1.ShowDialog();
@@ -38,7 +38,6 @@ public partial class SettingsViewer : Form
 
 	private void btnP2ChangeColor_Click(object sender, EventArgs e)
 	{
-		colorDialog1.Reset();
 		colorDialog1.Color = pbP2Color.BackColor;
 		colorDialog1.AnyColor = true;
 		var result = colorDialog1.ShowDialog();
@@ -82,6 +81,7 @@ public partial class SettingsViewer : Form
 		var settings = Settings.Load();
 		settings.P1Color = pbP1Color.BackColor;
 		settings.P2Color = pbP2Color.BackColor;
+		settings.CustomColorsDefined = colorDialog1.CustomColors;
 		settings.Save();
 		CheckSaveButton();
 	}

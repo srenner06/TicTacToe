@@ -14,8 +14,8 @@ public sealed class RemoteBoardHandler : BoardHandler, IDisposable
 	public event EventHandler? JoinedMatchmaking;
 	public event EventHandler? FoundOpponent;
 	public Player MyPlayer { get; private set; } = Player.NoOne;
+
 	private readonly HubConnection _hubConnection;
-	private string _playerId = "";
 	private string _gameId = "";
 	private bool _disposedValue;
 
@@ -33,20 +33,19 @@ public sealed class RemoteBoardHandler : BoardHandler, IDisposable
 
 		_hubConnection.On<Player[]>("UpdateGameState", OnUpdateGameState);
 		_hubConnection.On<Player>("GameFinished", OnGameFinished);
-		_hubConnection.On<string, Player>("StartGame", OnStartGame);
+		_hubConnection.On<string, Player, Player>("StartGame", OnStartGame);
 		_hubConnection.On("OpponentLeft", () =>
 		{
 			RaiseFinished(new RemoteResult(Player.NoOne, MyPlayer, true, false));
 		});
-
 	}
 
-	private void OnStartGame(string gameId, Player myPlayer)
+	private void OnStartGame(string gameId, Player myPlayer, Player startingPlayer)
 	{
 		_board = new();
-		this._gameId = gameId;
+		_gameId = gameId;
 		MyPlayer = myPlayer;
-		NextTurn = Player.Player1;
+		NextTurn = startingPlayer;
 		IsPlaying = true;
 		FoundOpponent?.Invoke(this, EventArgs.Empty);
 	}
@@ -69,11 +68,11 @@ public sealed class RemoteBoardHandler : BoardHandler, IDisposable
 		IsPlaying = false;
 		_hubConnection.StartAsync().AwaitSync();
 		JoinedMatchmaking?.Invoke(this, EventArgs.Empty);
-		_playerId = _hubConnection.InvokeAsync<RemotePlayer>("JoinMatchmaking").AwaitSync().Id;
+		_ = _hubConnection.InvokeAsync("JoinMatchmaking");
 	}
-	public void LeaveMatchmaking()
+	public async Task LeaveMatchmakingAsync()
 	{
-		_hubConnection.InvokeAsync("LeaveMatchmaking", _playerId).AwaitSync();
+		await _hubConnection.InvokeAsync("LeaveMatchmaking");
 		RaiseFinished(new RemoteResult(Player.NoOne, MyPlayer, false, true));
 	}
 
@@ -82,7 +81,7 @@ public sealed class RemoteBoardHandler : BoardHandler, IDisposable
 		move = new Move(MyPlayer, move.Field);
 		if (ValidMove(move))
 		{
-			_hubConnection.InvokeAsync("MakeMove", _playerId, _gameId, move.Field).AwaitSync();
+			_hubConnection.InvokeAsync("MakeMove", _gameId, move.Field).AwaitSync();
 			return true;
 		}
 
@@ -100,9 +99,9 @@ public sealed class RemoteBoardHandler : BoardHandler, IDisposable
 					if (_hubConnection.State == HubConnectionState.Connected)
 					{
 						if (IsPlaying)
-							await _hubConnection.InvokeAsync("LeaveMatch", _playerId, _gameId);
+							await _hubConnection.InvokeAsync("LeaveMatch", _gameId);
 						else
-							await _hubConnection.InvokeAsync("LeaveMatchmaking", _playerId);
+							await _hubConnection.InvokeAsync("LeaveMatchmaking");
 					}
 				}
 				catch { }

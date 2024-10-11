@@ -179,7 +179,7 @@ partial class BoardView
 		// lblStatus
 		// 
 		lblStatus.AutoSize = true;
-		lblStatus.Location = new Point(10, 4);
+		lblStatus.Location = new Point(3, 4);
 		lblStatus.Name = "lblStatus";
 		lblStatus.Size = new Size(143, 20);
 		lblStatus.TabIndex = 1;
